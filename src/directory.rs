@@ -52,35 +52,12 @@ pub fn find_smallest_dir_to_delete_for_update() -> Result<usize, Box<dyn std::er
     dir_sizes.sort_unstable();
 
     for dir_size in dir_sizes {
-        println!("dir size: {}", dir_size);
         if dir_size >= &minimum_space_to_free {
             return Ok(*dir_size);
         }
     }
 
     Err("Unable to find the magic directory".into())
-}
-
-fn compute_directory_size(
-    dir_path: &str,
-    directories: &HashMap<String, Directory>,
-) -> Result<usize, Box<dyn std::error::Error>> {
-    let directory = directories
-        .get(dir_path)
-        .ok_or(format!("Unable to find directory of path {:?}", dir_path))?;
-
-    let mut files_size = 0;
-    for (_, file_size) in &directory.files {
-        files_size += file_size;
-    }
-
-    let mut children_directories_size = 0;
-    for child_dir_name in &directory.children_dir_names {
-        let child_dir_path = build_child_path(dir_path, child_dir_name);
-        children_directories_size += compute_directory_size(&child_dir_path, directories)?;
-    }
-
-    return Ok(files_size + children_directories_size);
 }
 
 fn build_child_path(current_path: &str, dir_name: &str) -> String {
@@ -276,13 +253,31 @@ impl FileSystem {
 
     fn compute_directories_sizes(&self) -> Result<HashMap<String, usize>, Box<dyn std::error::Error>> {
         let mut path_to_directory_size = HashMap::new();
-        for (dir_path, _) in &self.path_to_directory {
-            path_to_directory_size.insert(
-                dir_path.to_string(),
-                compute_directory_size(dir_path, &self.path_to_directory)?
-            );
-        }
+        self.compute_directory_size(&self.root_path, &mut path_to_directory_size)?;
         Ok(path_to_directory_size)
+    }
+
+    fn compute_directory_size(&self, dir_path: &str, map: &mut HashMap<String, usize>) -> Result<usize, Box<dyn std::error::Error>> {
+        let directory = self.path_to_directory
+            .get(dir_path)
+            .ok_or(format!("Unable to find directory of path {:?}", dir_path))?;
+
+        let mut files_size = 0;
+        for (_, file_size) in &directory.files {
+            files_size += file_size;
+        }
+
+        let mut children_directories_size = 0;
+        for child_dir_name in &directory.children_dir_names {
+            let child_dir_path = build_child_path(dir_path, child_dir_name);
+            children_directories_size += self.compute_directory_size(&child_dir_path, map)?;
+        }
+
+        let size = files_size + children_directories_size;
+
+        map.insert(dir_path.to_string(), size);
+
+        return Ok(size);
     }
 }
 
