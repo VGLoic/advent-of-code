@@ -1,7 +1,7 @@
-mod directory;
+mod tree_house;
 
 fn main() {
-    let total = directory::find_smallest_dir_to_delete_for_update().unwrap();
+    let total = tree_house::find_highest_scenic_score().unwrap();
     println!("Total: {}", total);
 }
 
