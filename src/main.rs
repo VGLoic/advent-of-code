@@ -1,7 +1,7 @@
-mod tree_house;
+mod rope_bridge;
 
 fn main() {
-    let total = tree_house::find_highest_scenic_score().unwrap();
+    let total = rope_bridge::count_distinct_tail_positions().unwrap();
     println!("Total: {}", total);
 }
 
