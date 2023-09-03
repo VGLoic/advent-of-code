@@ -1,22 +1,51 @@
+use std::{env, process};
+
 mod rope_bridge;
 
 fn main() {
-    let total = rope_bridge::count_distinct_tail_positions().unwrap();
-    println!("Total: {}", total);
+    let exercise = parse_env_args().unwrap_or_else(|err| {
+        println!("Problem parsing argumments {err}");
+        process::exit(1);
+    });
+
+    let _ = exercise.run().unwrap_or_else(|err| {
+        println!("Problem while running the exercise {err}");
+        process::exit(1);
+    });
 }
 
-// fn execute_second_first_part() {
-//     let score = rock_paper_scissors::second_part::compute_score_with_second_strategy();
-//     print!("Score obtained: {} ", score);
-// }
+enum Exercise {
+    RopeBridge(Part),
+}
 
-// fn execute_first() {
-//     let max_callory = callories::find_elf_with_most_callories();
-//     let max_callory_v2 = callories::find_elf_with_most_callories_v2();
-//     let sum = callories::find_sum_of_three_most_callories();
-//     let sum_v2 = callories::find_sum_of_three_most_callories_v2();
-//     println!("The max callories: {}", max_callory);
-//     println!("The max callories v2: {}", max_callory_v2);
-//     println!("The sum of three most callories: {}", sum);
-//     println!("The sum of three most callories_v2: {}", sum_v2);
-// }
+impl Exercise {
+    fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
+        match self {
+            Exercise::RopeBridge(_) => {
+                let result = rope_bridge::count_distinct_tail_positions()?;
+                println!("Got {}", result);
+                Ok(())
+            }
+        }
+    }
+}
+
+enum Part {
+    Part1,
+}
+
+fn parse_env_args() -> Result<Exercise, Box<dyn std::error::Error>> {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 1 || args.len() > 2 {
+        return Err(format!("Invalid number of arguments, expected at least one and at most two, got {}", args.len()).into());
+    }
+    let exercise_name = args[1].as_str();
+    match exercise_name {
+        "rope-bridge" => {
+            Ok(Exercise::RopeBridge(Part::Part1))
+        },
+        other => {
+            return Err(format!("Unknown exercise chosen, please choose one of the available exercise, got {}", other).into());
+        }
+    }
+}
