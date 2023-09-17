@@ -4,7 +4,6 @@ use std::{
     fs,
 };
 
-#[allow(dead_code)]
 pub fn find_sum_of_small_diretories() -> Result<usize, Box<dyn std::error::Error>> {
     let content = fs::read_to_string("input-07.txt")?;
 

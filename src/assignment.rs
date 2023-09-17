@@ -1,6 +1,5 @@
 use std::fs;
 
-#[allow(dead_code)]
 pub fn count_fully_contained_assignement_in_pair() -> Result<u32, Box<dyn std::error::Error>> {
     let contents = fs::read_to_string("input-04.txt")?;
 

@@ -1,5 +1,4 @@
-#[allow(dead_code)]
-mod first_part {
+pub mod first_part {
     use std::fs;
     use super::*;
 
@@ -32,12 +31,11 @@ mod first_part {
     }
 }
 
-#[allow(dead_code)]
 pub mod second_part {
     use std::fs;
     use super::*;
 
-    pub fn compute_priorities_sum_v2() -> Result<u32, &'static str> {
+    pub fn compute_priorities_sum() -> Result<u32, &'static str> {
         let contents = fs::read_to_string("input-03.txt").expect("Unable to read file `input-03.txt`");
         let mut total = 0;
         let mut i = 0;

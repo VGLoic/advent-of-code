@@ -1,6 +1,6 @@
 use std::{fs, collections::HashSet};
 
-pub fn count_distinct_tail_positions() -> Result<usize, Box<dyn std::error::Error>> {
+pub fn count_distinct_tail_positions(knots_number: usize) -> Result<usize, Box<dyn std::error::Error>> {
     let content = fs::read_to_string("input-09.txt")?;
 
     let instructions = content
@@ -11,7 +11,7 @@ pub fn count_distinct_tail_positions() -> Result<usize, Box<dyn std::error::Erro
     
     let mut tail_positions = HashSet::new();
 
-    let mut rope = Rope::new(10)?;
+    let mut rope = Rope::new(knots_number)?;
 
     tail_positions.insert((rope.tail().x, rope.tail().y));
 
