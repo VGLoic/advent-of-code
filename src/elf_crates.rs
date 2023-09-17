@@ -3,7 +3,7 @@ use std::{
     fs, str, vec,
 };
 
-pub fn move_crates() -> Result<String, Box<dyn std::error::Error>> {
+pub fn move_crates(should_move_crate_one_at_the_time: bool) -> Result<String, Box<dyn std::error::Error>> {
     let contents = fs::read_to_string("input-05.txt")?;
 
     let index = contents
@@ -21,7 +21,11 @@ pub fn move_crates() -> Result<String, Box<dyn std::error::Error>> {
     let orders = parse_orders(orders_config)?;
 
     for order in orders {
-        crates_setup.apply_order_v2(&order)?;
+        if should_move_crate_one_at_the_time {
+            crates_setup.apply_order_one_crate_at_the_time(&order)?;
+        } else {
+            crates_setup.apply_order_multiple_crates_at_the_time(&order)?;
+        }
 
         println!("Order: {}", order);
         println!("crates setup: {}", crates_setup);
@@ -47,8 +51,7 @@ struct CratesSetup {
 }
 
 impl CratesSetup {
-    #[allow(dead_code)]
-    fn apply_order(&mut self, order: &Order) -> Result<(), Box<dyn std::error::Error>> {
+    fn apply_order_one_crate_at_the_time(&mut self, order: &Order) -> Result<(), Box<dyn std::error::Error>> {
         for _ in 0..order.quantity {
             let moved_crate = self.setup[order.from]
                 .last()
@@ -60,7 +63,7 @@ impl CratesSetup {
         return Ok(());
     }
 
-    fn apply_order_v2(&mut self, order: &Order) -> Result<(), Box<dyn std::error::Error>> {
+    fn apply_order_multiple_crates_at_the_time(&mut self, order: &Order) -> Result<(), Box<dyn std::error::Error>> {
         let from_column_length = self.setup[order.from].len();
         let mut moved_crates: Vec<_> = self.setup[order.from]
             .drain(from_column_length - order.quantity..)
