@@ -32,7 +32,9 @@ pub fn find_smallest_dir_to_delete_for_update() -> Result<usize, Box<dyn std::er
 
     let path_to_directory_size = file_system.compute_directories_sizes()?;
 
-    let root_size = path_to_directory_size.get(&file_system.root_path).ok_or("Unable to get the size of the root repository")?;
+    let root_size = path_to_directory_size
+        .get(&file_system.root_path)
+        .ok_or("Unable to get the size of the root repository")?;
 
     const TOTAL_DISK_SPACE: usize = 70_000_000;
     const SPACE_REQUIRED_FOR_UPDATE: usize = 30_000_000;
@@ -64,7 +66,10 @@ fn build_child_path(current_path: &str, dir_name: &str) -> String {
 }
 
 fn build_previous_path(current_path: &str) -> String {
-    let mut path_items = current_path.trim_end_matches("/").split("/").collect::<Vec<_>>();
+    let mut path_items = current_path
+        .trim_end_matches("/")
+        .split("/")
+        .collect::<Vec<_>>();
     path_items.pop();
 
     path_items.join("/") + "/"
@@ -145,9 +150,7 @@ impl<'a> Cmd<'a> {
     }
 }
 
-fn parse_input_to_file_system(
-    content: String,
-) -> Result<FileSystem, Box<dyn std::error::Error>> {
+fn parse_input_to_file_system(content: String) -> Result<FileSystem, Box<dyn std::error::Error>> {
     let mut file_system = FileSystem::new("/");
     let mut current_path = file_system.root_path.to_string();
 
@@ -202,8 +205,7 @@ fn parse_input_to_file_system(
 
 struct FileSystem {
     root_path: String,
-    path_to_directory: HashMap<String, Directory>
-
+    path_to_directory: HashMap<String, Directory>,
 }
 
 impl FileSystem {
@@ -213,7 +215,10 @@ impl FileSystem {
         let root_dir = Directory::new();
         path_to_directory.insert(root_path.to_string(), root_dir);
 
-        FileSystem { root_path: root_path.to_string(), path_to_directory }
+        FileSystem {
+            root_path: root_path.to_string(),
+            path_to_directory,
+        }
     }
 
     fn has_child(&self, parent_path: &str, dir_name: &str) -> bool {
@@ -221,43 +226,55 @@ impl FileSystem {
         self.path_to_directory.contains_key(&child_path)
     }
 
-    fn insert_dir_with_parent(&mut self, parent_path: &str, dir_name: &str) -> Result<String, Box<dyn std::error::Error>> {
-        let parent_dir = self.path_to_directory.get_mut(parent_path)
-            .ok_or(format!(
-                "Unexpected not found repository with path {} in list",
-                parent_path
-            ))?;
+    fn insert_dir_with_parent(
+        &mut self,
+        parent_path: &str,
+        dir_name: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let parent_dir = self.path_to_directory.get_mut(parent_path).ok_or(format!(
+            "Unexpected not found repository with path {} in list",
+            parent_path
+        ))?;
         parent_dir.children_dir_names.insert(dir_name.to_string());
 
         let child_path: String = build_child_path(parent_path, dir_name);
 
-        self.path_to_directory.insert(
-            child_path.clone(),
-            Directory::new()
-        );
+        self.path_to_directory
+            .insert(child_path.clone(), Directory::new());
 
         Ok(child_path)
     }
 
-    fn add_file(&mut self, dir_path: &str, file_name: &str, file_size: usize) -> Result<(), Box<dyn std::error::Error>> {
-        let dir = self.path_to_directory.get_mut(dir_path)
-            .ok_or(format!(
-                "Unexpected not found repository with path {} in list",
-                dir_path
-            ))?;
+    fn add_file(
+        &mut self,
+        dir_path: &str,
+        file_name: &str,
+        file_size: usize,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let dir = self.path_to_directory.get_mut(dir_path).ok_or(format!(
+            "Unexpected not found repository with path {} in list",
+            dir_path
+        ))?;
         dir.files.insert(file_name.to_string(), file_size);
 
         Ok(())
     }
 
-    fn compute_directories_sizes(&self) -> Result<HashMap<String, usize>, Box<dyn std::error::Error>> {
+    fn compute_directories_sizes(
+        &self,
+    ) -> Result<HashMap<String, usize>, Box<dyn std::error::Error>> {
         let mut path_to_directory_size = HashMap::new();
         self.compute_directory_size(&self.root_path, &mut path_to_directory_size)?;
         Ok(path_to_directory_size)
     }
 
-    fn compute_directory_size(&self, dir_path: &str, map: &mut HashMap<String, usize>) -> Result<usize, Box<dyn std::error::Error>> {
-        let directory = self.path_to_directory
+    fn compute_directory_size(
+        &self,
+        dir_path: &str,
+        map: &mut HashMap<String, usize>,
+    ) -> Result<usize, Box<dyn std::error::Error>> {
+        let directory = self
+            .path_to_directory
             .get(dir_path)
             .ok_or(format!("Unable to find directory of path {:?}", dir_path))?;
 
@@ -294,7 +311,6 @@ impl Directory {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

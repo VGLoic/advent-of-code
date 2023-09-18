@@ -9,9 +9,8 @@ pub fn count_fully_contained_assignement_in_pair() -> Result<u32, Box<dyn std::e
         let pair = parse_line_into_pair(line)?;
 
         if pair.has_contained_assignements() {
-            count +=1;
+            count += 1;
         }
-
     }
 
     return Ok(count);
@@ -26,53 +25,48 @@ pub fn count_overlapping_assignement_in_pair() -> Result<u32, Box<dyn std::error
         let pair = parse_line_into_pair(line)?;
 
         if pair.has_overlapping_assignemments() {
-            count +=1;
+            count += 1;
         }
-
     }
 
     return Ok(count);
 }
 
 fn parse_line_into_pair(line: &str) -> Result<Pair, Box<dyn std::error::Error>> {
-    let raw_assignements = line
-        .trim()
-        .trim_end()
-        .split(",")
-        .collect::<Vec<&str>>();
+    let raw_assignements = line.trim().trim_end().split(",").collect::<Vec<&str>>();
     if raw_assignements.len() != 2 {
         return Err("Expected two assignements from line".into());
     }
 
     let pair = Pair {
         a: Assignement::from_raw(raw_assignements[0])?,
-        b: Assignement::from_raw(raw_assignements[1])?
+        b: Assignement::from_raw(raw_assignements[1])?,
     };
-    return Ok(pair)
+    return Ok(pair);
 }
 
 #[derive(Debug, Copy, Clone)]
 struct Assignement {
     start: u32,
-    end: u32
+    end: u32,
 }
 
 impl Assignement {
     fn from_raw(raw: &str) -> Result<Assignement, Box<dyn std::error::Error>> {
-        let boundaries: Vec<_> = raw.split("-")
+        let boundaries: Vec<_> = raw
+            .split("-")
             .map(|x| {
                 return x.parse::<u32>();
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        
         if boundaries.len() != 2 {
             return Err("Expected two buondaries in raw assignement".into());
         }
 
         return Ok(Assignement {
             start: boundaries[0],
-            end: boundaries[1]
+            end: boundaries[1],
         });
     }
 }
@@ -80,7 +74,7 @@ impl Assignement {
 #[derive(Debug)]
 struct Pair {
     a: Assignement,
-    b: Assignement
+    b: Assignement,
 }
 
 impl Pair {
@@ -95,7 +89,10 @@ impl Pair {
     }
 }
 
-fn order_assignements<'a>(a: &'a Assignement, b: &'a Assignement) -> (&'a Assignement, &'a Assignement) {
+fn order_assignements<'a>(
+    a: &'a Assignement,
+    b: &'a Assignement,
+) -> (&'a Assignement, &'a Assignement) {
     if a.start < b.start {
         return (a, b);
     }

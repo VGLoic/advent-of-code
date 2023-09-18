@@ -2,7 +2,6 @@ use std::{env, process};
 
 use advent_of_code::Exercise;
 
-
 fn main() {
     let args: Vec<String> = env::args().collect();
     let exercise = Exercise::try_from(&args).unwrap_or_else(|err| {
