@@ -29,6 +29,16 @@ pub mod first_part {
         }
         return Ok((a, b));
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn part_1_has_right_answer() {
+            assert_eq!(compute_priorities_sum(), Ok(7848));
+        }
+    }
 }
 
 pub mod second_part {
@@ -53,6 +63,16 @@ pub mod second_part {
             i += 1;
         }
         return Ok(total);
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn part_2_has_right_answer() {
+            assert_eq!(compute_priorities_sum(), Ok(2616));
+        }
     }
 }
 

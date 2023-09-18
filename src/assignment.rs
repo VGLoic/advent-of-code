@@ -107,3 +107,18 @@ fn order_assignements<'a>(a: &'a Assignement, b: &'a Assignement) -> (&'a Assign
     }
     return (b, a);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_1_has_right_answer() {
+        assert_eq!(count_fully_contained_assignement_in_pair().unwrap(), 450);
+    }
+
+    #[test]
+    fn part_2_has_right_answer() {
+        assert_eq!(count_overlapping_assignement_in_pair().unwrap(), 837);
+    }
+}

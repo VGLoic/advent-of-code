@@ -205,3 +205,19 @@ fn parse_orders(orders_config: &str) -> Result<Vec<Order>, Box<dyn std::error::E
 
     return Ok(orders);
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_1_has_right_answer() {
+        assert_eq!(move_crates(true).unwrap(), "SHMSDGZVC");
+    }
+
+    #[test]
+    fn part_2_has_right_answer() {
+        assert_eq!(move_crates(false).unwrap(), "VRZGHDFBQ");
+    }
+}

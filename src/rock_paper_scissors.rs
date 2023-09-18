@@ -43,6 +43,16 @@ pub mod first_part {
             _ => Err("Invalid choice, expected X, Y or Z"),
         }
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn part_1_has_right_answer() {
+            assert_eq!(compute_score_with_initial_strategy(), 13565);
+        }
+    }
 }
 
 pub mod second_part {
@@ -105,6 +115,16 @@ pub mod second_part {
             "Y" => Ok(ResultNeed::Draw),
             "Z" => Ok(ResultNeed::Win),
             _ => Err("Invalid choice, expected X, Y or Z"),
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn part_2_has_right_answer() {
+            assert_eq!(compute_score_with_second_strategy(), 12424);
         }
     }
     

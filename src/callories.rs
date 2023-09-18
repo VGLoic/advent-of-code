@@ -42,3 +42,21 @@ pub fn find_sum_of_three_most_callories_v2() -> u32 {
 
     return maximums.iter().sum();
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_1_has_right_answer() {
+        let result = find_elf_with_most_callories_v2();
+        assert_eq!(result, 71471);
+    }
+
+    #[test]
+    fn part_2_has_right_answer() {
+        let result = find_sum_of_three_most_callories_v2();
+        assert_eq!(result, 211189);
+    }
+}
