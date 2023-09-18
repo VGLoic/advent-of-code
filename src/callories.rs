@@ -1,6 +1,5 @@
 use std::fs;
 
-
 pub fn find_elf_with_most_callories_v2() -> u32 {
     let contents = fs::read_to_string("input-01.txt").expect("Expected a file `input-01.txt`");
     let mut max = 0;
@@ -42,7 +41,6 @@ pub fn find_sum_of_three_most_callories_v2() -> u32 {
 
     return maximums.iter().sum();
 }
-
 
 #[cfg(test)]
 mod tests {

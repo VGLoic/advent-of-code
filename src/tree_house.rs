@@ -1,4 +1,7 @@
-use std::{fmt, fs, collections::{HashMap, HashSet}};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt, fs,
+};
 
 #[allow(dead_code)]
 pub fn count_visible_trees() -> Result<usize, Box<dyn std::error::Error>> {
@@ -26,7 +29,7 @@ struct ScenicScore {
     top: usize,
     right: usize,
     bottom: usize,
-    left: usize
+    left: usize,
 }
 
 #[derive(Debug)]
@@ -66,14 +69,17 @@ impl Forest {
             let mut highest_tree_from_right = self.grid[dimension - i - 1][dimension - 1];
 
             for j in 1..dimension - 1 {
-
                 let tree = self.grid[i][j];
-                
+
                 let is_visible_from_left = tree > highest_tree_from_left;
                 let is_visible_from_top = tree > highest_trees_from_top[j];
-                let has_already_been_detected_as_visible_from_right_or_bottom = visible_tree_scenic_scores.contains_key(&(i, j));
+                let has_already_been_detected_as_visible_from_right_or_bottom =
+                    visible_tree_scenic_scores.contains_key(&(i, j));
 
-                if is_visible_from_left || is_visible_from_top || has_already_been_detected_as_visible_from_right_or_bottom {
+                if is_visible_from_left
+                    || is_visible_from_top
+                    || has_already_been_detected_as_visible_from_right_or_bottom
+                {
                     let left_score = if is_visible_from_left { j } else { 0 };
                     let top_score = if is_visible_from_top { i } else { 0 };
 
@@ -82,12 +88,15 @@ impl Forest {
                         score.left = left_score;
                         score.top = top_score;
                     } else {
-                        visible_tree_scenic_scores.insert((i,j), ScenicScore {
-                            top: top_score,
-                            right: 0,
-                            bottom: 0,
-                            left: left_score
-                        });
+                        visible_tree_scenic_scores.insert(
+                            (i, j),
+                            ScenicScore {
+                                top: top_score,
+                                right: 0,
+                                bottom: 0,
+                                left: left_score,
+                            },
+                        );
                     }
                 }
 
@@ -101,29 +110,39 @@ impl Forest {
                 let inverse_tree = self.grid[dimension - 1 - i][dimension - 1 - j];
 
                 let is_visible_from_right = inverse_tree > highest_tree_from_right;
-                let is_visible_from_bottom = inverse_tree > highest_trees_from_bottom[dimension - 1 - j];
-                let has_already_been_detected_as_visible_from_left_or_top = visible_tree_scenic_scores.contains_key(&(dimension - 1 - i, dimension - 1 - j));
+                let is_visible_from_bottom =
+                    inverse_tree > highest_trees_from_bottom[dimension - 1 - j];
+                let has_already_been_detected_as_visible_from_left_or_top =
+                    visible_tree_scenic_scores
+                        .contains_key(&(dimension - 1 - i, dimension - 1 - j));
 
-                if is_visible_from_right || is_visible_from_bottom || has_already_been_detected_as_visible_from_left_or_top {
+                if is_visible_from_right
+                    || is_visible_from_bottom
+                    || has_already_been_detected_as_visible_from_left_or_top
+                {
                     let right_score = if is_visible_from_right { j } else { 0 };
                     let bottom_score = if is_visible_from_bottom { i } else { 0 };
-                    let visible_tree_scenic_score = visible_tree_scenic_scores.get_mut(&(dimension - 1 - i, dimension - 1 - j));
+                    let visible_tree_scenic_score =
+                        visible_tree_scenic_scores.get_mut(&(dimension - 1 - i, dimension - 1 - j));
 
                     if let Some(score) = visible_tree_scenic_score {
                         score.right = right_score;
                         score.bottom = bottom_score;
                     } else {
-                        visible_tree_scenic_scores.insert((dimension - 1 - i, dimension - 1 - j), ScenicScore {
-                            top: 0,
-                            right: right_score,
-                            bottom: bottom_score,
-                            left: 0
-                        });
+                        visible_tree_scenic_scores.insert(
+                            (dimension - 1 - i, dimension - 1 - j),
+                            ScenicScore {
+                                top: 0,
+                                right: right_score,
+                                bottom: bottom_score,
+                                left: 0,
+                            },
+                        );
                     }
                 }
 
                 if is_visible_from_right {
-                    highest_tree_from_right = inverse_tree ;
+                    highest_tree_from_right = inverse_tree;
                 }
                 if is_visible_from_bottom {
                     highest_trees_from_bottom[dimension - 1 - j] = inverse_tree;
@@ -184,7 +203,8 @@ impl Forest {
                     j -= 1;
                 }
             }
-            let score = scenic_score.top * scenic_score.right * scenic_score.bottom * scenic_score.left;
+            let score =
+                scenic_score.top * scenic_score.right * scenic_score.bottom * scenic_score.left;
             if score > max_score {
                 max_score = score;
             }
@@ -207,14 +227,13 @@ impl Forest {
             let mut highest_tree_from_right = self.grid[dimension - i - 1][dimension - 1];
 
             for j in 1..dimension - 1 {
-
                 let tree = self.grid[i][j];
-                
+
                 let is_visible_from_left = tree > highest_tree_from_left;
                 let is_visible_from_top = tree > highest_trees_from_top[j];
 
                 if is_visible_from_left || is_visible_from_top {
-                    visible_trees.insert((i,j));
+                    visible_trees.insert((i, j));
                 }
 
                 if is_visible_from_left {
@@ -227,14 +246,15 @@ impl Forest {
                 let inverse_tree = self.grid[dimension - 1 - i][dimension - 1 - j];
 
                 let is_visible_from_right = inverse_tree > highest_tree_from_right;
-                let is_visible_from_bottom = inverse_tree > highest_trees_from_bottom[dimension - 1 - j];
+                let is_visible_from_bottom =
+                    inverse_tree > highest_trees_from_bottom[dimension - 1 - j];
 
                 if is_visible_from_right || is_visible_from_bottom {
                     visible_trees.insert((dimension - 1 - i, dimension - 1 - j));
                 }
 
                 if is_visible_from_right {
-                    highest_tree_from_right = inverse_tree ;
+                    highest_tree_from_right = inverse_tree;
                 }
                 if is_visible_from_bottom {
                     highest_trees_from_bottom[dimension - 1 - j] = inverse_tree;
@@ -295,7 +315,6 @@ fn line_to_row(line: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         .collect::<Result<Vec<u8>, _>>()
         .map_err(|e| e.into())
 }
-
 
 #[cfg(test)]
 mod tests {

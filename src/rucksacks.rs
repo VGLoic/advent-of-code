@@ -1,9 +1,10 @@
 pub mod first_part {
-    use std::fs;
     use super::*;
+    use std::fs;
 
     pub fn compute_priorities_sum() -> Result<u32, &'static str> {
-        let contents = fs::read_to_string("input-03.txt").expect("Unable to read file `input-03.txt`");
+        let contents =
+            fs::read_to_string("input-03.txt").expect("Unable to read file `input-03.txt`");
         let mut total = 0;
         for line in contents.lines() {
             let (left_compartment, right_compartment) = parse_line_into_compartments(line)?;
@@ -17,7 +18,7 @@ pub mod first_part {
 
     fn find_common_item(str_a: &str, str_b: &str) -> Option<char> {
         let common_char_opt = str_a.chars().find(|&c| str_b.contains(c));
-    
+
         return common_char_opt;
     }
 
@@ -42,11 +43,12 @@ pub mod first_part {
 }
 
 pub mod second_part {
-    use std::fs;
     use super::*;
+    use std::fs;
 
     pub fn compute_priorities_sum() -> Result<u32, &'static str> {
-        let contents = fs::read_to_string("input-03.txt").expect("Unable to read file `input-03.txt`");
+        let contents =
+            fs::read_to_string("input-03.txt").expect("Unable to read file `input-03.txt`");
         let mut total = 0;
         let mut i = 0;
         let lines: Vec<_> = contents.lines().collect();
@@ -75,7 +77,6 @@ pub mod second_part {
         }
     }
 }
-
 
 fn item_to_priority(c: char) -> Result<u32, &'static str> {
     let a: u32 = c

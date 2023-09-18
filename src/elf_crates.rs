@@ -3,7 +3,9 @@ use std::{
     fs, str, vec,
 };
 
-pub fn move_crates(should_move_crate_one_at_the_time: bool) -> Result<String, Box<dyn std::error::Error>> {
+pub fn move_crates(
+    should_move_crate_one_at_the_time: bool,
+) -> Result<String, Box<dyn std::error::Error>> {
     let contents = fs::read_to_string("input-05.txt")?;
 
     let index = contents
@@ -51,7 +53,10 @@ struct CratesSetup {
 }
 
 impl CratesSetup {
-    fn apply_order_one_crate_at_the_time(&mut self, order: &Order) -> Result<(), Box<dyn std::error::Error>> {
+    fn apply_order_one_crate_at_the_time(
+        &mut self,
+        order: &Order,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         for _ in 0..order.quantity {
             let moved_crate = self.setup[order.from]
                 .last()
@@ -63,7 +68,10 @@ impl CratesSetup {
         return Ok(());
     }
 
-    fn apply_order_multiple_crates_at_the_time(&mut self, order: &Order) -> Result<(), Box<dyn std::error::Error>> {
+    fn apply_order_multiple_crates_at_the_time(
+        &mut self,
+        order: &Order,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let from_column_length = self.setup[order.from].len();
         let mut moved_crates: Vec<_> = self.setup[order.from]
             .drain(from_column_length - order.quantity..)
@@ -205,7 +213,6 @@ fn parse_orders(orders_config: &str) -> Result<Vec<Order>, Box<dyn std::error::E
 
     return Ok(orders);
 }
-
 
 #[cfg(test)]
 mod tests {
