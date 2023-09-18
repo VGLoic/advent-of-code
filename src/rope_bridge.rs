@@ -217,3 +217,18 @@ impl Instruction {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_1_has_right_answer() {
+        assert_eq!(count_distinct_tail_positions(2).unwrap(), 5930);
+    }
+
+    #[test]
+    fn part_2_has_right_answer() {
+        assert_eq!(count_distinct_tail_positions(10).unwrap(), 2443);
+    }
+}

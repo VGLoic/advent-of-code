@@ -295,3 +295,19 @@ fn line_to_row(line: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         .collect::<Result<Vec<u8>, _>>()
         .map_err(|e| e.into())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_1_has_right_answer() {
+        assert_eq!(count_visible_trees().unwrap(), 1816);
+    }
+
+    #[test]
+    fn part_2_has_right_answer() {
+        assert_eq!(find_highest_scenic_score().unwrap(), 383520);
+    }
+}

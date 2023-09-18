@@ -294,3 +294,19 @@ impl Directory {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_1_has_right_answer() {
+        assert_eq!(find_sum_of_small_diretories().unwrap(), 1449447);
+    }
+
+    #[test]
+    fn part_2_has_right_answer() {
+        assert_eq!(find_smallest_dir_to_delete_for_update().unwrap(), 8679207);
+    }
+}

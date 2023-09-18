@@ -30,10 +30,10 @@ pub fn find_start_of_packet_marker_index() -> Result<usize, Box<dyn std::error::
         match existing_position {
             Some(j) => {
                 let mut jump_size = target_length - j - 1;
-                println!("Not uniq! {:?} {}", previous_characters, c);
+                // println!("Not uniq! {:?} {}", previous_characters, c);
                 let mut new_previous_characters = iteration_str_as_chars[i + 1 - target_length + jump_size..i + jump_size].to_vec();
                 while !has_unique_elements(&new_previous_characters) {
-                    println!("Has duplicate: {:?}", new_previous_characters);
+                    // println!("Has duplicate: {:?}", new_previous_characters);
                     jump_size += 1;
                     new_previous_characters = iteration_str_as_chars[i + 1 - target_length + jump_size..i + jump_size].to_vec();
                 }
@@ -75,12 +75,12 @@ pub fn find_start_of_message_marker_index() -> Result<usize, Box<dyn std::error:
         previous_characters.push_back(c);
 
         if has_unique_elements(&previous_characters) {
-            println!("Uniq!: {:?}", previous_characters);
+            // println!("Uniq!: {:?}", previous_characters);
             println!("Iteration {}", iteration);
             return Ok(i + target_length);
         }
 
-        println!("Not uniq! {:?}", previous_characters);
+        // println!("Not uniq! {:?}", previous_characters);
 
         previous_characters.pop_front();
     }
@@ -95,4 +95,23 @@ where
 {
     let mut set = HashSet::new();
     return iterable.into_iter().all(|x| set.insert(x));
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[ignore]
+    fn part_1_has_right_answer() {
+        assert_eq!(find_start_of_packet_marker_index().unwrap(), 1816);
+    }
+
+
+    #[test]
+    #[ignore]
+    fn part_2_has_right_answer() {
+        assert_eq!(find_start_of_message_marker_index().unwrap(), 2625);
+    }
 }
