@@ -76,8 +76,8 @@ impl Exercise {
         match self {
             Exercise::Callories(part) => {
                 let result = match part {
-                    Part::Part1 => callories::find_elf_with_most_callories_v2(),
-                    Part::Part2 => callories::find_sum_of_three_most_callories_v2(),
+                    Part::Part1 => callories::find_max_callories_on_single_elf()?,
+                    Part::Part2 => callories::find_sum_of_maximums_callories(3)?,
                 };
                 println!("Got {}", result);
             }
