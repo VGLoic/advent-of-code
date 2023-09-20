@@ -1,199 +1,184 @@
-#[allow(dead_code)]
-pub mod first_part {
-    use std::fs;
+use std::fs;
 
-    use super::game;
-
-    pub fn compute_score_with_initial_strategy() -> u32 {
-        let contents = fs::read_to_string("input-02.txt").expect("Expected a file `input-02.txt`");
-        let mut score = 0;
-        contents.lines().for_each(|line| {
-            let round_score = parse_line_to_round(line)
-                .expect("Unable to parse the line for a round")
-                .score();
-            score += round_score;
-        });
-        return score;
+pub fn compute_score_with_initial_strategy() -> Result<u32, Box<dyn std::error::Error>> {
+    let contents = fs::read_to_string("input-02.txt")?;
+    let mut score = 0;
+    for line in contents.lines() {
+        score += Round::build_using_first_strategy(line)?.score();
     }
-
-    fn parse_line_to_round(line: &str) -> Result<game::Round, &str> {
-        let choices: Vec<_> = line.trim().trim_end().split(" ").collect();
-
-        if choices.len() != 2 {
-            return Err("Invalid line format, expect '<Letter> <Letter>'");
-        }
-
-        let what_the_other_played = game::parse_other_player_choice(choices[0])?;
-        let what_i_played = parse_my_choice(choices[1])?;
-
-        let round = game::Round::new(what_i_played, what_the_other_played);
-
-        return Ok(round);
-    }
-
-    fn parse_my_choice(c: &str) -> Result<game::GameChoice, &'static str> {
-        match c {
-            "X" => Ok(game::GameChoice::Rock),
-            "Y" => Ok(game::GameChoice::Paper),
-            "Z" => Ok(game::GameChoice::Scissors),
-            _ => Err("Invalid choice, expected X, Y or Z"),
-        }
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        #[test]
-        fn part_1_has_right_answer() {
-            assert_eq!(compute_score_with_initial_strategy(), 13565);
-        }
-    }
+    Ok(score)
 }
 
-pub mod second_part {
-    use std::fs;
-
-    use super::game;
-
-    pub fn compute_score_with_second_strategy() -> u32 {
-        let contents = fs::read_to_string("input-02.txt").expect("Expected a file `input-02.txt`");
-        let mut score = 0;
-        contents.lines().for_each(|line| {
-            let round_score = parse_line_to_round(line)
-                .expect("Unable to parse the line for a round")
-                .score();
-            score += round_score;
-        });
-        return score;
+pub fn compute_score_with_second_strategy() -> Result<u32, Box<dyn std::error::Error>> {
+    let contents = fs::read_to_string("input-02.txt")?;
+    let mut score = 0;
+    for line in contents.lines() {
+        score += Round::build_using_second_strategy(line)?.score();
     }
-
-    fn parse_line_to_round(line: &str) -> Result<game::Round, &str> {
-        let choices: Vec<_> = line.trim().trim_end().split(" ").collect();
-
-        if choices.len() != 2 {
-            return Err("Invalid line format, expect '<Letter> <Letter>'");
-        }
-
-        let what_the_other_played = game::parse_other_player_choice(choices[0])?;
-        let what_i_played =
-            parse_expected_result(choices[1])?.to_game_choice(&what_the_other_played)?;
-
-        let round = game::Round::new(what_i_played, what_the_other_played);
-
-        return Ok(round);
-    }
-
-    enum ResultNeed {
-        Loose,
-        Draw,
-        Win,
-    }
-
-    impl ResultNeed {
-        fn to_game_choice(
-            self,
-            other_game_choice: &game::GameChoice,
-        ) -> Result<game::GameChoice, &'static str> {
-            let other_game_num = other_game_choice.to_num();
-
-            match self {
-                ResultNeed::Loose => Ok(game::GameChoice::from_num((other_game_num + 2) % 3)?),
-                ResultNeed::Draw => Ok(game::GameChoice::from_num(other_game_num)?),
-                ResultNeed::Win => Ok(game::GameChoice::from_num((3 + other_game_num + 1) % 3)?),
-            }
-        }
-    }
-
-    fn parse_expected_result(c: &str) -> Result<ResultNeed, &'static str> {
-        match c {
-            "X" => Ok(ResultNeed::Loose),
-            "Y" => Ok(ResultNeed::Draw),
-            "Z" => Ok(ResultNeed::Win),
-            _ => Err("Invalid choice, expected X, Y or Z"),
-        }
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        #[test]
-        fn part_2_has_right_answer() {
-            assert_eq!(compute_score_with_second_strategy(), 12424);
-        }
-    }
+    Ok(score)
 }
 
-mod game {
-    #[derive(Debug)]
-    pub enum GameChoice {
-        Rock,
-        Paper,
-        Scissors,
-    }
+#[derive(Debug)]
+enum GameChoice {
+    Rock,
+    Paper,
+    Scissors,
+}
 
-    impl GameChoice {
-        pub fn to_num(&self) -> u32 {
-            match self {
-                GameChoice::Rock => 0,
-                GameChoice::Paper => 1,
-                GameChoice::Scissors => 2,
-            }
-        }
-        pub fn from_num(n: u32) -> Result<GameChoice, &'static str> {
-            match n {
-                0 => Ok(GameChoice::Rock),
-                1 => Ok(GameChoice::Paper),
-                2 => Ok(GameChoice::Scissors),
-                _ => Err("Invalid num entry, expected a number from 0 to 2"),
-            }
+impl GameChoice {
+    fn to_num(&self) -> u32 {
+        match self {
+            GameChoice::Rock => 0,
+            GameChoice::Paper => 1,
+            GameChoice::Scissors => 2,
         }
     }
-
-    #[derive(Debug)]
-    pub struct Round {
-        what_the_other_played: GameChoice,
-        what_i_played: GameChoice,
-    }
-
-    impl Round {
-        pub fn new(what_i_played: GameChoice, what_the_other_played: GameChoice) -> Round {
-            Round {
-                what_i_played,
-                what_the_other_played,
-            }
-        }
-
-        fn base_score(&self) -> u32 {
-            match self.what_i_played {
-                GameChoice::Rock => 1,
-                GameChoice::Paper => 2,
-                GameChoice::Scissors => 3,
-            }
-        }
-        fn compete_score(&self) -> u32 {
-            let diff = (3 + self.what_the_other_played.to_num() - self.what_i_played.to_num()) % 3;
-
-            match diff {
-                0 => 3,
-                1 => 0,
-                2 => 6,
-                _ => panic!("Unexpected diff value :( {}", diff),
-            }
-        }
-
-        pub fn score(&self) -> u32 {
-            return self.base_score() + self.compete_score();
+    fn from_num(n: u32) -> Result<GameChoice, &'static str> {
+        match n {
+            0 => Ok(GameChoice::Rock),
+            1 => Ok(GameChoice::Paper),
+            2 => Ok(GameChoice::Scissors),
+            _ => Err("Invalid num entry, expected a number from 0 to 2"),
         }
     }
 
-    pub fn parse_other_player_choice(c: &str) -> Result<GameChoice, &str> {
-        match c {
+    fn build_other_player_choice(value: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        match value {
             "A" => Ok(GameChoice::Rock),
             "B" => Ok(GameChoice::Paper),
             "C" => Ok(GameChoice::Scissors),
-            _ => Err("Invalid choice, expected A, B or C"),
+            other => Err(format!("Invalid choice, expected A, B or C, got {}", other).into()),
         }
+    }
+
+    fn build_using_first_strategy(value: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        match value {
+            "X" => Ok(GameChoice::Rock),
+            "Y" => Ok(GameChoice::Paper),
+            "Z" => Ok(GameChoice::Scissors),
+            other => Err(format!("Invalid choice, expected X, Y or Z, got {}", other).into()),
+        }
+    }
+
+    fn build_using_second_strategy(
+        value: &str,
+        other_player_choice: &GameChoice,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let result_needed = ResultNeed::try_from(value)?;
+        let other_player_choice_num = other_player_choice.to_num();
+        match result_needed {
+            ResultNeed::Loose => Ok(GameChoice::from_num((other_player_choice_num + 2) % 3)?),
+            ResultNeed::Draw => Ok(GameChoice::from_num(other_player_choice_num)?),
+            ResultNeed::Win => Ok(GameChoice::from_num((3 + other_player_choice_num + 1) % 3)?),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Round {
+    what_the_other_played: GameChoice,
+    what_i_played: GameChoice,
+}
+
+impl Round {
+    fn new(what_i_played: GameChoice, what_the_other_played: GameChoice) -> Round {
+        Round {
+            what_i_played,
+            what_the_other_played,
+        }
+    }
+
+    fn build_using_first_strategy(value: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let choices: Vec<_> = value.trim().trim_end().split(" ").collect();
+
+        if choices.len() != 2 {
+            return Err(format!(
+                "Invalid line format, expect '<Letter> <Letter>', got {}",
+                value
+            )
+            .into());
+        }
+
+        let what_the_other_played = GameChoice::build_other_player_choice(choices[0])?;
+        let what_i_played = GameChoice::build_using_first_strategy(choices[1])?;
+
+        let round = Round::new(what_i_played, what_the_other_played);
+
+        return Ok(round);
+    }
+
+    fn build_using_second_strategy(value: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let choices: Vec<_> = value.trim().trim_end().split(" ").collect();
+
+        if choices.len() != 2 {
+            return Err(format!(
+                "Invalid value format, expect '<Letter> <Letter>', got {}",
+                value
+            )
+            .into());
+        }
+
+        let what_the_other_played = GameChoice::build_other_player_choice(choices[0])?;
+        let what_i_played =
+            GameChoice::build_using_second_strategy(choices[1], &what_the_other_played)?;
+
+        let round = Round::new(what_i_played, what_the_other_played);
+
+        return Ok(round);
+    }
+
+    fn base_score(&self) -> u32 {
+        match self.what_i_played {
+            GameChoice::Rock => 1,
+            GameChoice::Paper => 2,
+            GameChoice::Scissors => 3,
+        }
+    }
+    fn compete_score(&self) -> u32 {
+        let diff = (3 + self.what_the_other_played.to_num() - self.what_i_played.to_num()) % 3;
+
+        match diff {
+            0 => 3,
+            1 => 0,
+            2 => 6,
+            _ => panic!("Unexpected diff value :( {}", diff),
+        }
+    }
+
+    fn score(&self) -> u32 {
+        return self.base_score() + self.compete_score();
+    }
+}
+
+enum ResultNeed {
+    Loose,
+    Draw,
+    Win,
+}
+
+impl TryFrom<&str> for ResultNeed {
+    type Error = Box<dyn std::error::Error>;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "X" => Ok(ResultNeed::Loose),
+            "Y" => Ok(ResultNeed::Draw),
+            "Z" => Ok(ResultNeed::Win),
+            other => Err(format!("Invalid choice, expected X, Y or Z, got {}", other).into()),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_1_strategy_gives_expected_score() {
+        assert_eq!(compute_score_with_initial_strategy().unwrap(), 13565);
+    }
+
+    #[test]
+    fn part_2_strategy_gives_expected_score() {
+        assert_eq!(compute_score_with_second_strategy().unwrap(), 12424);
     }
 }
