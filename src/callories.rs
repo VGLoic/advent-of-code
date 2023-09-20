@@ -20,7 +20,9 @@ pub fn find_max_callories_on_single_elf() -> Result<usize, Box<dyn std::error::E
     Ok(max)
 }
 
-pub fn find_sum_of_maximums_callories(number_of_elves_to_consider: usize) -> Result<usize, Box<dyn std::error::Error>> {
+pub fn find_sum_of_maximums_callories(
+    number_of_elves_to_consider: usize,
+) -> Result<usize, Box<dyn std::error::Error>> {
     let contents = fs::read_to_string("input-01.txt")?;
     let mut maximums = vec![0; number_of_elves_to_consider];
     let mut elf_sum = 0;
@@ -31,7 +33,7 @@ pub fn find_sum_of_maximums_callories(number_of_elves_to_consider: usize) -> Res
                 maximums[0] = elf_sum;
                 maximums.sort_unstable();
             }
-    
+
             elf_sum = 0;
         } else {
             let callory: usize = line.parse()?;

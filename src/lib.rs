@@ -83,12 +83,8 @@ impl Exercise {
             }
             Exercise::RockPaperScissors(part) => {
                 let result = match part {
-                    Part::Part1 => {
-                        rock_paper_scissors::first_part::compute_score_with_initial_strategy()
-                    }
-                    Part::Part2 => {
-                        rock_paper_scissors::second_part::compute_score_with_second_strategy()
-                    }
+                    Part::Part1 => rock_paper_scissors::compute_score_with_initial_strategy()?,
+                    Part::Part2 => rock_paper_scissors::compute_score_with_second_strategy()?,
                 };
                 println!("Got {}", result);
             }
