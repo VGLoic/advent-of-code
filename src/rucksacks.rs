@@ -2,9 +2,8 @@ pub mod first_part {
     use super::*;
     use std::fs;
 
-    pub fn compute_priorities_sum() -> Result<u32, &'static str> {
-        let contents =
-            fs::read_to_string("input-03.txt").expect("Unable to read file `input-03.txt`");
+    pub fn compute_priorities_sum() -> Result<u32, Box<dyn std::error::Error>> {
+        let contents = fs::read_to_string("input-03.txt")?;
         let mut total = 0;
         for line in contents.lines() {
             let (left_compartment, right_compartment) = parse_line_into_compartments(line)?;
@@ -22,11 +21,17 @@ pub mod first_part {
         return common_char_opt;
     }
 
-    fn parse_line_into_compartments(line: &str) -> Result<(&str, &str), &'static str> {
+    fn parse_line_into_compartments(
+        line: &str,
+    ) -> Result<(&str, &str), Box<dyn std::error::Error>> {
         let split_index = line.len() / 2;
         let (a, b) = line.split_at(split_index);
         if a.len() != b.len() {
-            return Err("Invalid split, got two parts with different lengths");
+            return Err(format!(
+                "Invalid split, got two parts with different lengths, {} and {}",
+                a, b
+            )
+            .into());
         }
         return Ok((a, b));
     }
@@ -37,7 +42,7 @@ pub mod first_part {
 
         #[test]
         fn part_1_has_right_answer() {
-            assert_eq!(compute_priorities_sum(), Ok(7848));
+            assert_eq!(compute_priorities_sum().unwrap(), 7848);
         }
     }
 }
@@ -46,9 +51,8 @@ pub mod second_part {
     use super::*;
     use std::fs;
 
-    pub fn compute_priorities_sum() -> Result<u32, &'static str> {
-        let contents =
-            fs::read_to_string("input-03.txt").expect("Unable to read file `input-03.txt`");
+    pub fn compute_priorities_sum() -> Result<u32, Box<dyn std::error::Error>> {
+        let contents = fs::read_to_string("input-03.txt")?;
         let mut total = 0;
         let mut i = 0;
         let lines: Vec<_> = contents.lines().collect();
@@ -73,15 +77,15 @@ pub mod second_part {
 
         #[test]
         fn part_2_has_right_answer() {
-            assert_eq!(compute_priorities_sum(), Ok(2616));
+            assert_eq!(compute_priorities_sum().unwrap(), 2616);
         }
     }
 }
 
-fn item_to_priority(c: char) -> Result<u32, &'static str> {
+fn item_to_priority(c: char) -> Result<u32, Box<dyn std::error::Error>> {
     let a: u32 = c
         .try_into()
-        .or(Err("Unable to convert the char to a `u32`"))?;
+        .or(Err(format!("Unable to convert the char {} to a `u32`", c)))?;
     let number_in_alphabet = 26;
     if a >= 64 && a <= 64 + number_in_alphabet {
         return Ok(a - 64 + number_in_alphabet);
@@ -89,5 +93,5 @@ fn item_to_priority(c: char) -> Result<u32, &'static str> {
     if a >= 97 && a <= 97 + number_in_alphabet {
         return Ok(a - 96);
     }
-    return Err("Conversion of char is in an unmanaged range");
+    return Err(format!("Conversion of char is in an unmanaged range, expected between {} and {}, or beween {} and {}, got {}", 64, 64 + number_in_alphabet, 97, 97 + number_in_alphabet, a).into());
 }
