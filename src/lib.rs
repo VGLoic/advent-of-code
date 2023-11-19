@@ -9,6 +9,7 @@ mod rucksacks;
 mod tree_house;
 
 pub enum Exercise {
+    Help,
     Callories(Part),
     RockPaperScissors(Part),
     Rucksack(Part),
@@ -29,6 +30,25 @@ impl TryFrom<&Vec<String>> for Exercise {
     type Error = Box<dyn std::error::Error>;
 
     fn try_from(args: &Vec<String>) -> Result<Self, Box<dyn std::error::Error>> {
+        if args.len() == 0 {
+            return Err(
+                format!(
+                    "Invalid number of arguments, expected command as `cargo run <exercise name> <part (part_1 or part_2)>`, got no arguments",
+                ).into()
+            );
+        }
+
+        let help_cmd = "help".to_string();
+        let short_help = "-h".to_string();
+        let long_help = "--help".to_string();
+        if args.contains(&long_help) | args.contains(&short_help) {
+            return Ok(Exercise::Help);
+        }
+
+        if args[1] == help_cmd {
+            return Ok(Exercise::Help);
+        }
+
         if args.len() != 3 {
             return Err(
                 format!(
@@ -74,6 +94,37 @@ impl TryFrom<&Vec<String>> for Exercise {
 impl Exercise {
     pub fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         match self {
+            Exercise::Help => {
+                println!("Advent of code, edition 2022
+
+Website: https://adventofcode.com/2022
+
+List exercises and help: cargo run help
+
+Usage: cargo run [exercise] [part] [ARGS]...
+
+Exercise list (in the ascending order):
+    - callories,
+    - rock-paper-scissors,
+    - rucksack,
+    - assignement,
+    - elf-creates,
+    - marker,
+    - directory,
+    - tree-house,
+    - rope-bridge
+
+Part:
+    - part_1,
+        Run part 1 of the exercise
+    - part_2
+        Run part 2 of the exercise
+
+Args:
+    -h, --help
+        List exercises and help
+                ");
+            },
             Exercise::Callories(part) => {
                 let result = match part {
                     Part::Part1 => callories::find_max_callories_on_single_elf()?,
