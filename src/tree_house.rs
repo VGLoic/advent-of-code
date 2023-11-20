@@ -4,8 +4,8 @@ use std::{
 };
 
 #[allow(dead_code)]
-pub fn count_visible_trees() -> Result<usize, Box<dyn std::error::Error>> {
-    let content = fs::read_to_string("input-08.txt")?;
+pub fn count_visible_trees(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
+    let content = fs::read_to_string(filename)?;
 
     let forest = Forest::try_from_raw_grid(content)?;
 
@@ -14,8 +14,8 @@ pub fn count_visible_trees() -> Result<usize, Box<dyn std::error::Error>> {
     Ok(forest.inner_visible_trees().len() + 4 * (forest.dimension() - 1))
 }
 
-pub fn find_highest_scenic_score() -> Result<usize, Box<dyn std::error::Error>> {
-    let content = fs::read_to_string("input-08.txt")?;
+pub fn find_highest_scenic_score(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
+    let content = fs::read_to_string(filename)?;
 
     let forest = Forest::try_from_raw_grid(content)?;
 
@@ -321,12 +321,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn example_part_1_has_right_answer() {
+        assert_eq!(count_visible_trees("inputs/input-08-example.txt").unwrap(), 21);
+    }
+
+    #[test]
     fn part_1_has_right_answer() {
-        assert_eq!(count_visible_trees().unwrap(), 1816);
+        assert_eq!(count_visible_trees("inputs/input-08.txt").unwrap(), 1816);
+    }
+
+    #[test]
+    fn example_part_2_has_right_answer() {
+        assert_eq!(find_highest_scenic_score("inputs/input-08-example.txt").unwrap(), 8);
     }
 
     #[test]
     fn part_2_has_right_answer() {
-        assert_eq!(find_highest_scenic_score().unwrap(), 383520);
+        assert_eq!(find_highest_scenic_score("inputs/input-08.txt").unwrap(), 383520);
     }
 }

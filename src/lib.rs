@@ -43,6 +43,8 @@ Part:
         Run part 2 of the exercise
 
 Args:
+    -ex, --example
+        Run the exercise using exercise input instead of official input
     -h, --help
         List exercises and help
                 ");
@@ -84,15 +86,15 @@ impl TryFrom<&Vec<String>> for Command {
 }
 
 pub enum Exercise {
-    Callories(Part),
-    RockPaperScissors(Part),
-    Rucksack(Part),
-    Assignement(Part),
-    ElfCrates(Part),
-    Marker(Part),
-    Directory(Part),
-    TreeHouse(Part),
-    RopeBridge(Part),
+    Callories(Part, bool),
+    RockPaperScissors(Part, bool),
+    Rucksack(Part, bool),
+    Assignement(Part, bool),
+    ElfCrates(Part, bool),
+    Marker(Part, bool),
+    Directory(Part, bool),
+    TreeHouse(Part, bool),
+    RopeBridge(Part, bool),
 }
 
 pub enum Part {
@@ -104,10 +106,10 @@ impl TryFrom<&Vec<String>> for Exercise {
     type Error = Box<dyn std::error::Error>;
 
     fn try_from(args: &Vec<String>) -> Result<Self, Box<dyn std::error::Error>> {
-        if args.len() != 3 {
+        if args.len() < 3 {
             return Err(
                 format!(
-                    "Invalid number of arguments, expected command as `cargo run <exercise name> <part (part_1 or part_2)>`, got arguments {:?}",
+                    "Invalid number of arguments, expected command as `cargo run <exercise name> <part>`, got arguments {:?}",
                     args
                 ).into()
             );
@@ -125,16 +127,21 @@ impl TryFrom<&Vec<String>> for Exercise {
                 .into());
             }
         };
+        
+        let example_short = "-ex".to_string();
+        let example_long = "--example".to_string();
+        let use_example = args[3..].contains(&example_short) || args[3..].contains(&example_long);
+
         match exercise_name {
-            "callories" => Ok(Exercise::Callories(part)),
-            "rock-paper-scissors" => Ok(Exercise::RockPaperScissors(part)),
-            "rucksack" => Ok(Exercise::Rucksack(part)),
-            "assignement" => Ok(Exercise::Assignement(part)),
-            "elf-crates" => Ok(Exercise::ElfCrates(part)),
-            "marker" => Ok(Exercise::Marker(part)),
-            "directory" => Ok(Exercise::Directory(part)),
-            "tree-house" => Ok(Exercise::TreeHouse(part)),
-            "rope-bridge" => Ok(Exercise::RopeBridge(part)),
+            "callories" => Ok(Exercise::Callories(part, use_example)),
+            "rock-paper-scissors" => Ok(Exercise::RockPaperScissors(part, use_example)),
+            "rucksack" => Ok(Exercise::Rucksack(part, use_example)),
+            "assignement" => Ok(Exercise::Assignement(part, use_example)),
+            "elf-crates" => Ok(Exercise::ElfCrates(part, use_example)),
+            "marker" => Ok(Exercise::Marker(part, use_example)),
+            "directory" => Ok(Exercise::Directory(part, use_example)),
+            "tree-house" => Ok(Exercise::TreeHouse(part, use_example)),
+            "rope-bridge" => Ok(Exercise::RopeBridge(part, use_example)),
             other => {
                 return Err(format!(
                     "Unknown exercise chosen, please choose one of the available exercise, got {}",
@@ -149,70 +156,122 @@ impl TryFrom<&Vec<String>> for Exercise {
 impl Exercise {
     fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         match self {
-            Exercise::Callories(part) => {
+            Exercise::Callories(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-01-example.txt"
+                } else {
+                    "inputs/input-01.txt"
+                };
                 let result = match part {
-                    Part::Part1 => callories::find_max_callories_on_single_elf()?,
-                    Part::Part2 => callories::find_sum_of_maximums_callories(3)?,
+                    Part::Part1 => callories::find_max_callories_on_single_elf(filename)?,
+                    Part::Part2 => callories::find_sum_of_maximums_callories(filename, 3)?,
                 };
                 println!("Got {}", result);
             }
-            Exercise::RockPaperScissors(part) => {
+            Exercise::RockPaperScissors(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-02-example.txt"
+                } else {
+                    "inputs/input-02.txt"
+                };
                 let result = match part {
-                    Part::Part1 => rock_paper_scissors::compute_score_with_initial_strategy()?,
-                    Part::Part2 => rock_paper_scissors::compute_score_with_second_strategy()?,
+                    Part::Part1 => rock_paper_scissors::compute_score_with_initial_strategy(filename)?,
+                    Part::Part2 => rock_paper_scissors::compute_score_with_second_strategy(filename)?,
                 };
                 println!("Got {}", result);
             }
-            Exercise::Rucksack(part) => {
+            Exercise::Rucksack(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-03-example.txt"
+                } else {
+                    "inputs/input-03.txt"
+                };
                 let result = match part {
-                    Part::Part1 => rucksacks::first_part::compute_priorities_sum()?,
-                    Part::Part2 => rucksacks::second_part::compute_priorities_sum()?,
+                    Part::Part1 => rucksacks::first_part::compute_priorities_sum(filename)?,
+                    Part::Part2 => rucksacks::second_part::compute_priorities_sum(filename)?,
                 };
                 println!("Got {}", result);
             }
-            Exercise::Assignement(part) => {
+            Exercise::Assignement(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-04-example.txt"
+                } else {
+                    "inputs/input-04.txt"
+                };
                 let result = match part {
-                    Part::Part1 => assignment::count_fully_contained_assignement_in_pair()?,
-                    Part::Part2 => assignment::count_overlapping_assignement_in_pair()?,
+                    Part::Part1 => assignment::count_fully_contained_assignement_in_pair(filename)?,
+                    Part::Part2 => assignment::count_overlapping_assignement_in_pair(filename)?,
                 };
                 println!("Got {}", result);
             }
-            Exercise::ElfCrates(part) => {
+            Exercise::ElfCrates(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-05-example.txt"
+                } else {
+                    "inputs/input-05.txt"
+                };
                 let should_move_crate_one_at_the_time = match part {
                     Part::Part1 => true,
                     Part::Part2 => false,
                 };
-                let result = elf_crates::move_crates(should_move_crate_one_at_the_time)?;
+                let result = elf_crates::move_crates(filename, should_move_crate_one_at_the_time)?;
                 println!("Got {}", result);
             }
-            Exercise::Marker(part) => {
+            Exercise::Marker(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-06-example.txt"
+                } else {
+                    "inputs/input-06.txt"
+                };
                 let target_length = match part {
                     Part::Part1 => 4,
                     Part::Part2 => 14,
                 };
-                let result = marker::find_start_of_packet_marker_index(target_length)?;
+                let result = marker::find_start_of_packet_marker_index(filename, target_length)?;
                 println!("Got {}", result);
             }
-            Exercise::Directory(part) => {
+            Exercise::Directory(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-07-example.txt"
+                } else {
+                    "inputs/input-07.txt"
+                };
                 let result = match part {
-                    Part::Part1 => directory::find_sum_of_small_diretories()?,
-                    Part::Part2 => directory::find_smallest_dir_to_delete_for_update()?,
+                    Part::Part1 => directory::find_sum_of_small_diretories(filename)?,
+                    Part::Part2 => directory::find_smallest_dir_to_delete_for_update(filename)?,
                 };
                 println!("Got {}", result);
             }
-            Exercise::TreeHouse(part) => {
+            Exercise::TreeHouse(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-08-example.txt"
+                } else {
+                    "inputs/input-08.txt"
+                };
                 let result = match part {
-                    Part::Part1 => tree_house::count_visible_trees()?,
-                    Part::Part2 => tree_house::find_highest_scenic_score()?,
+                    Part::Part1 => tree_house::count_visible_trees(filename)?,
+                    Part::Part2 => tree_house::find_highest_scenic_score(filename)?,
                 };
                 println!("Got {}", result);
             }
-            Exercise::RopeBridge(part) => {
+            Exercise::RopeBridge(part, use_example) => {
+                let filename = match part {
+                    Part::Part1 => if *use_example {
+                            "inputs/input-09-example.txt"
+                        } else {
+                            "inputs/input-09.txt"
+                        },
+                        Part::Part2 => if *use_example {
+                            "inputs/input-09-example-part-2.txt"
+                        } else {
+                            "inputs/input-09.txt"
+                        }
+                };
                 let knots_number = match part {
                     Part::Part1 => 2,
                     Part::Part2 => 10,
                 };
-                let result = rope_bridge::count_distinct_tail_positions(knots_number)?;
+                let result = rope_bridge::count_distinct_tail_positions(filename, knots_number)?;
                 println!("Got {}", result);
             }
         };

@@ -2,8 +2,8 @@ pub mod first_part {
     use super::*;
     use std::fs;
 
-    pub fn compute_priorities_sum() -> Result<u32, Box<dyn std::error::Error>> {
-        let contents = fs::read_to_string("input-03.txt")?;
+    pub fn compute_priorities_sum(filename: &str) -> Result<u32, Box<dyn std::error::Error>> {
+        let contents = fs::read_to_string(filename)?;
         let mut total = 0;
         for line in contents.lines() {
             let (left_compartment, right_compartment) = parse_line_into_compartments(line)?;
@@ -41,8 +41,13 @@ pub mod first_part {
         use super::*;
 
         #[test]
+        fn example_part_1_has_right_answer() {
+            assert_eq!(compute_priorities_sum("inputs/input-03-example.txt").unwrap(), 157);
+        }
+
+        #[test]
         fn part_1_has_right_answer() {
-            assert_eq!(compute_priorities_sum().unwrap(), 7848);
+            assert_eq!(compute_priorities_sum("inputs/input-03.txt").unwrap(), 7848);
         }
     }
 }
@@ -51,8 +56,8 @@ pub mod second_part {
     use super::*;
     use std::fs;
 
-    pub fn compute_priorities_sum() -> Result<u32, Box<dyn std::error::Error>> {
-        let contents = fs::read_to_string("input-03.txt")?;
+    pub fn compute_priorities_sum(filename: &str) -> Result<u32, Box<dyn std::error::Error>> {
+        let contents = fs::read_to_string(filename)?;
         let mut total = 0;
         let mut i = 0;
         let lines: Vec<_> = contents.lines().collect();
@@ -76,8 +81,13 @@ pub mod second_part {
         use super::*;
 
         #[test]
+        fn example_part_2_has_right_answer() {
+            assert_eq!(compute_priorities_sum("inputs/input-03-example.txt").unwrap(), 70);
+        }
+
+        #[test]
         fn part_2_has_right_answer() {
-            assert_eq!(compute_priorities_sum().unwrap(), 2616);
+            assert_eq!(compute_priorities_sum("inputs/input-03.txt").unwrap(), 2616);
         }
     }
 }
