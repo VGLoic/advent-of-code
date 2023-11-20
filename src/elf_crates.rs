@@ -4,9 +4,10 @@ use std::{
 };
 
 pub fn move_crates(
+    filename: &str,
     should_move_crate_one_at_the_time: bool,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let contents = fs::read_to_string("input-05.txt")?;
+    let contents = fs::read_to_string(filename)?;
 
     let index = contents
         .find("\n\n")
@@ -219,12 +220,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn part_1_has_right_answer() {
-        assert_eq!(move_crates(true).unwrap(), "SHMSDGZVC");
+    fn example_part_1_has_right_answer() {
+        assert_eq!(move_crates("inputs/input-05-example.txt", true).unwrap(), "CMZ");
     }
 
     #[test]
-    fn part_2_has_right_answer() {
-        assert_eq!(move_crates(false).unwrap(), "VRZGHDFBQ");
+    fn part_1_has_right_answer() {
+        assert_eq!(move_crates("inputs/input-05.txt", true).unwrap(), "SHMSDGZVC");
     }
+
+    #[test]
+    fn example_part_2_has_right_answer() {
+        assert_eq!(move_crates("inputs/input-05-example.txt", false).unwrap(), "MCD");
+    }
+    
+    #[test]
+    fn part_2_has_right_answer() {
+        assert_eq!(move_crates("inputs/input-05.txt", false).unwrap(), "VRZGHDFBQ");
+    }
+
 }

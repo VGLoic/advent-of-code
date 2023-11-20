@@ -1,7 +1,7 @@
 use std::fs;
 
-pub fn compute_score_with_initial_strategy() -> Result<u32, Box<dyn std::error::Error>> {
-    let contents = fs::read_to_string("input-02.txt")?;
+pub fn compute_score_with_initial_strategy(filename: &str) -> Result<u32, Box<dyn std::error::Error>> {
+    let contents = fs::read_to_string(filename)?;
     let mut score = 0;
     for line in contents.lines() {
         score += Round::build_using_first_strategy(line)?.score();
@@ -9,8 +9,8 @@ pub fn compute_score_with_initial_strategy() -> Result<u32, Box<dyn std::error::
     Ok(score)
 }
 
-pub fn compute_score_with_second_strategy() -> Result<u32, Box<dyn std::error::Error>> {
-    let contents = fs::read_to_string("input-02.txt")?;
+pub fn compute_score_with_second_strategy(filename: &str) -> Result<u32, Box<dyn std::error::Error>> {
+    let contents = fs::read_to_string(filename)?;
     let mut score = 0;
     for line in contents.lines() {
         score += Round::build_using_second_strategy(line)?.score();
@@ -173,12 +173,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn example_part_1_strategy_gives_expected_score() {
+        assert_eq!(compute_score_with_initial_strategy("inputs/input-02-example.txt").unwrap(), 15);
+    }
+
+    #[test]
     fn part_1_strategy_gives_expected_score() {
-        assert_eq!(compute_score_with_initial_strategy().unwrap(), 13565);
+        assert_eq!(compute_score_with_initial_strategy("inputs/input-02.txt").unwrap(), 13565);
+    }
+
+    #[test]
+    fn example_part_2_strategy_gives_expected_score() {
+        assert_eq!(compute_score_with_second_strategy("inputs/input-02-example.txt").unwrap(), 12);
     }
 
     #[test]
     fn part_2_strategy_gives_expected_score() {
-        assert_eq!(compute_score_with_second_strategy().unwrap(), 12424);
+        assert_eq!(compute_score_with_second_strategy("inputs/input-02.txt").unwrap(), 12424);
     }
 }

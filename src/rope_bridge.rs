@@ -1,9 +1,10 @@
 use std::{collections::HashSet, fs};
 
 pub fn count_distinct_tail_positions(
+    filename: &str,
     knots_number: usize,
 ) -> Result<usize, Box<dyn std::error::Error>> {
-    let content = fs::read_to_string("input-09.txt")?;
+    let content = fs::read_to_string(filename)?;
 
     let instructions = content
         .lines()
@@ -242,12 +243,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn example_part_1_has_right_answer() {
+        assert_eq!(count_distinct_tail_positions("inputs/input-09-example.txt", 2).unwrap(), 13);
+    }
+
+    #[test]
     fn part_1_has_right_answer() {
-        assert_eq!(count_distinct_tail_positions(2).unwrap(), 5930);
+        assert_eq!(count_distinct_tail_positions("inputs/input-09.txt", 2).unwrap(), 5930);
+    }
+
+    #[test]
+    fn example_part_2_has_right_answer() {
+        assert_eq!(count_distinct_tail_positions("inputs/input-09-example-part-2.txt", 10).unwrap(), 36);
     }
 
     #[test]
     fn part_2_has_right_answer() {
-        assert_eq!(count_distinct_tail_positions(10).unwrap(), 2443);
+        assert_eq!(count_distinct_tail_positions("inputs/input-09.txt", 10).unwrap(), 2443);
     }
 }
