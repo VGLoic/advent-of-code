@@ -35,7 +35,8 @@ Exercise list (in the ascending order):
     - marker,
     - directory,
     - tree-house,
-    - rope-bridge
+    - rope-bridge,
+    - cathod-ray-tube,
 
 Part:
     - part_1,
