@@ -7,6 +7,7 @@ mod rock_paper_scissors;
 mod rope_bridge;
 mod rucksacks;
 mod tree_house;
+mod cathod_ray_tube;
 
 pub enum Command {
     Help,
@@ -95,6 +96,7 @@ pub enum Exercise {
     Directory(Part, bool),
     TreeHouse(Part, bool),
     RopeBridge(Part, bool),
+    CathodRayTube(Part, bool),
 }
 
 pub enum Part {
@@ -142,6 +144,7 @@ impl TryFrom<&Vec<String>> for Exercise {
             "directory" => Ok(Exercise::Directory(part, use_example)),
             "tree-house" => Ok(Exercise::TreeHouse(part, use_example)),
             "rope-bridge" => Ok(Exercise::RopeBridge(part, use_example)),
+            "cathod-ray-tube" => Ok(Exercise::CathodRayTube(part, use_example)),
             other => {
                 return Err(format!(
                     "Unknown exercise chosen, please choose one of the available exercise, got {}",
@@ -273,6 +276,19 @@ impl Exercise {
                 };
                 let result = rope_bridge::count_distinct_tail_positions(filename, knots_number)?;
                 println!("Got {}", result);
+            },
+            Exercise::CathodRayTube(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-10-example.txt"
+                } else {
+                    "inputs/input-10.txt"
+                };
+                let result = match part {
+                    Part::Part1 => cathod_ray_tube::sum_signal_strengths(filename)?.to_string(),
+                    Part::Part2 => cathod_ray_tube::display_signal(filename)?,
+                };
+
+                println!("Got \n{}", result)
             }
         };
         Ok(())
