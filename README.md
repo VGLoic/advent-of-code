@@ -24,5 +24,6 @@ Where `part` is either `part_1` or `part_2` and exercise name is defined as foll
 - Exercise #6: `marker`,
 - Exercise #7: `directory`,
 - Exercise #8: `tree-house`,
-- Exercise #9: `rope-bridge`.
-- Exercise #10: `cathod-ray-tube`.
+- Exercise #9: `rope-bridge`,
+- Exercise #10: `cathod-ray-tube`,
+- Exercise #10: `monkey-in-the-middle`.

@@ -8,6 +8,7 @@ mod rope_bridge;
 mod rucksacks;
 mod tree_house;
 mod cathod_ray_tube;
+mod monkey_in_the_middle;
 
 pub enum Command {
     Help,
@@ -37,6 +38,7 @@ Exercise list (in the ascending order):
     - tree-house,
     - rope-bridge,
     - cathod-ray-tube,
+    - monkey-in-the-middle,
 
 Part:
     - part_1,
@@ -98,6 +100,7 @@ pub enum Exercise {
     TreeHouse(Part, bool),
     RopeBridge(Part, bool),
     CathodRayTube(Part, bool),
+    MonkeyInTheMiddle(Part, bool),
 }
 
 pub enum Part {
@@ -146,6 +149,7 @@ impl TryFrom<&Vec<String>> for Exercise {
             "tree-house" => Ok(Exercise::TreeHouse(part, use_example)),
             "rope-bridge" => Ok(Exercise::RopeBridge(part, use_example)),
             "cathod-ray-tube" => Ok(Exercise::CathodRayTube(part, use_example)),
+            "monkey-in-the-middle" => Ok(Exercise::MonkeyInTheMiddle(part, use_example)),
             other => {
                 return Err(format!(
                     "Unknown exercise chosen, please choose one of the available exercise, got {}",
@@ -290,7 +294,20 @@ impl Exercise {
                 };
 
                 println!("Got \n{}", result)
-            }
+            },
+            Exercise::MonkeyInTheMiddle(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-11-example.txt"
+                } else {
+                    "inputs/input-11.txt"
+                };
+                let result = match part {
+                    Part::Part1 => monkey_in_the_middle::compute_monkey_business(filename)?,
+                    Part::Part2 => monkey_in_the_middle::compute_big_monkey_business(filename)?,
+                };
+
+                println!("Got {}", result)
+            },
         };
         Ok(())
     }
