@@ -1,4 +1,4 @@
-use std::{fs, collections::VecDeque};
+use std::{fs, collections::{VecDeque, HashMap}};
 
 pub fn compute_monkey_business(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(filename)?;
@@ -59,6 +59,9 @@ pub fn compute_big_monkey_business(filename: &str) -> Result<usize, Box<dyn std:
                     (thrown_item, destination_monkey_index)
                 );
             }
+
+            // Thread implementation
+            // let thrown_items = monkey.inspect_items()?;
             for (complexity, destination_index) in thrown_items {
                 monkeys[destination_index].receive_new_item(complexity);
             }
@@ -70,6 +73,12 @@ pub fn compute_big_monkey_business(filename: &str) -> Result<usize, Box<dyn std:
     counts.reverse();
     
     Ok(counts[0] * counts[1])
+}
+
+#[derive(Debug)]
+struct BigMonkeysReunion {
+    items: HashMap<usize, BigMonkeyItem>,
+    monkeys: Vec<BigMonkey>,
 }
 
 #[derive(Debug)]
@@ -85,6 +94,38 @@ struct BigMonkeyItem {
     initial_worry_level: usize,
     operations: Vec<Operation>
 }
+
+// Thread implementation
+// impl BigMonkeyItem {
+//     fn is_divisible_by(&self, divider: usize) -> bool {
+//         let mut remainder = self.initial_worry_level % divider;
+//         for op in &self.operations {
+//             match op {
+//                 Operation::Addition(v) => {
+//                     match v {
+//                         OperationValue::Itself => {
+//                             remainder = (remainder * 2) % divider;
+//                         },
+//                         OperationValue::Value(n) => {
+//                             remainder = (remainder + n) % divider;
+//                         }
+//                     }
+//                 },
+//                 Operation::Multiplication(v) => {
+//                     match v {
+//                         OperationValue::Itself => {
+//                             remainder = (remainder * remainder) % divider;
+//                         },
+//                         OperationValue::Value(n) => {
+//                             remainder = (remainder * n) % divider;
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//         remainder == 0
+//     }
+// }
 
 impl BigMonkey {
     fn has_items(&self) -> bool {
@@ -115,36 +156,38 @@ impl BigMonkey {
         }
     }
 
+    // Thread implementation
+    // fn inspect_items(&mut self) -> Result<Vec<(BigMonkeyItem, usize)>, Box<dyn std::error::Error>> {
+    //     let divider = self.test.divider;
+    //     let test_true_destination_index = self.test.test_true_destination_index;
+    //     let test_false_destination_index = self.test.test_false_destination_index;
+    //     let mut children = vec![];
+    //     // for i in 0..self.items.len() {
+    //     //     let mut thrown_item = self.items[i];
+    //     // }
+    //     for thrown_item in &self.items {
+    //         self.inspected_items_count += 1;
+    //         let mut thrown_item = thrown_item.clone();
+    //         thrown_item.operations.push(self.operation.clone());
+    //         children.push(std::thread::spawn(move || -> (BigMonkeyItem, usize) {
+    //             let pass_test = thrown_item.is_divisible_by(divider);
+    //             let destination_index = if pass_test { test_true_destination_index } else { test_false_destination_index };
+    //             (thrown_item, destination_index)
+    //         }));
+    //     }
+    //     self.items.clear();
+    //     Ok(
+    //         children.into_iter()
+    //             .map(|c| c.join().unwrap())
+    //             .collect()
+    //     )
+    // }
+
     fn receive_new_item(&mut self, item: BigMonkeyItem) {
         self.items.push_back(item);
     }
 
     fn pass_test_to_item(&self, item: &BigMonkeyItem) -> bool {
-        // let a = &item.operations.iter().fold(item.initial_worry_level % self.test.divider, |r, op| {
-        //     match op {
-        //         Operation::Addition(v) => {
-        //             match v {
-        //                 OperationValue::Itself => {
-        //                     (r * 2) % self.test.divider
-        //                 },
-        //                 OperationValue::Value(n) => {
-        //                     (r + n) % self.test.divider
-        //                 }
-        //             }
-        //         },
-        //         Operation::Multiplication(v) => {
-        //             match v {
-        //                 OperationValue::Itself => {
-        //                     (r * r) % self.test.divider
-        //                 },
-        //                 OperationValue::Value(n) => {
-        //                     (r * n) % self.test.divider
-        //                 }
-        //             }
-        //         }
-        //     }
-        // });
-        // return *a == 0;
         let mut remainder = item.initial_worry_level % self.test.divider;
         for op in &item.operations {
             match op {
