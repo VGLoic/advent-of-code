@@ -39,36 +39,14 @@ pub fn compute_monkey_business(filename: &str) -> Result<usize, Box<dyn std::err
 pub fn compute_big_monkey_business(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(filename)?;
 
-    let mut monkeys: Vec<BigMonkey> = vec![];
-    for monkey_str in content.split("\n\n") {
-        monkeys.push(BigMonkey::try_from(monkey_str)?);
-    }
-
-    let number_of_monkeys = monkeys.len();
+    let monkey_reunion = &mut BigMonkeysReunion::try_from(content.as_str())?;
 
     for i in 0..10_000 {
         println!("Round {i}");
-        for i in 0..number_of_monkeys {
-            // println!("  Monkey {i}");
-            let monkey = &mut monkeys[i];
-            // println!("      Has {} items", monkey.items.len());
-            let mut thrown_items = vec![];
-            while monkey.has_items() {
-                let (thrown_item, destination_monkey_index) = monkey.inspect_next_item()?;
-                thrown_items.push(
-                    (thrown_item, destination_monkey_index)
-                );
-            }
-
-            // Thread implementation
-            // let thrown_items = monkey.inspect_items()?;
-            for (complexity, destination_index) in thrown_items {
-                monkeys[destination_index].receive_new_item(complexity);
-            }
-        }
+        monkey_reunion.play_round();
     }
 
-    let mut counts = monkeys.iter().map(|m| m.inspected_items_count).collect::<Vec<usize>>();
+    let mut counts = monkey_reunion.monkeys.iter().map(|m| m.inspected_items_count).collect::<Vec<usize>>();
     counts.sort_unstable();
     counts.reverse();
     
@@ -77,14 +55,114 @@ pub fn compute_big_monkey_business(filename: &str) -> Result<usize, Box<dyn std:
 
 #[derive(Debug)]
 struct BigMonkeysReunion {
+    item_test_cache: HashMap<(usize, usize), (usize, usize)>,
     items: HashMap<usize, BigMonkeyItem>,
     monkeys: Vec<BigMonkey>,
+}
+
+impl BigMonkeysReunion {
+    fn play_round(&mut self) {
+        for i in 0..self.monkeys.len() {
+            println!("  Monkey {i}");
+            
+            let mut thrown_items = vec![];
+            
+            let monkey = &mut self.monkeys[i];
+            println!("      Has {} items", monkey.items.len());
+
+            for item_id in &monkey.items {
+                let item = self.items.get_mut(&item_id).unwrap();
+                item.operations.push(monkey.operation.clone());
+
+                let remainder = item.remainder(monkey.test.divider, self.item_test_cache.get(&(*item_id, i)));
+                self.item_test_cache.insert((*item_id, i), (remainder, item.operations.len()));
+
+                let destination_index = if remainder == 0 {
+                    monkey.test.test_true_destination_index
+                } else {
+                    monkey.test.test_false_destination_index
+                };
+                
+                thrown_items.push((*item_id, destination_index));
+            }
+
+            monkey.inspected_items_count += monkey.items.len();
+            monkey.items.clear();
+
+
+            for (item_id, destination_index) in thrown_items {
+                self.monkeys[destination_index].items.push(item_id);
+            }
+        }
+    }
+}
+
+impl TryFrom<&str> for BigMonkeysReunion {
+    type Error = Box<dyn std::error::Error>;
+  
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let mut monkeys: Vec<BigMonkey> = vec![];
+        let mut items = HashMap::<usize, BigMonkeyItem>::new();
+
+        let mut item_index = 0;
+
+        for monkey_str in value.split("\n\n") {
+            let mut lines = monkey_str.lines();
+    
+            // Skip first line
+            lines.next();
+    
+            // Second line is for the matching items
+            let second_line = lines.next().ok_or("Line for matching items definition not found")?.trim().trim_end();
+            let items_prefix = "Starting items:";
+            if !second_line.starts_with(items_prefix) {
+            return Err(format!("Invalid line, expected {} <items>, got `{}`", items_prefix, second_line).into());
+            }
+            let monkey_initial_items = second_line
+                .strip_prefix(items_prefix).or(Some("")).unwrap()
+                .split(",")
+                .map(|x| x.trim().parse::<usize>())
+                .map(|x| x.and_then(|n| Ok(BigMonkeyItem{
+                    initial_worry_level: n,
+                    operations: vec![]
+                })))
+                .collect::<Result<Vec<BigMonkeyItem>, std::num::ParseIntError>>()
+                .map_err(|_| "Unable to parse one of the given item into a number")?;
+
+            let mut monkey_initial_items_ids = vec![];
+            for item in monkey_initial_items {
+                items.insert(item_index, item);
+                monkey_initial_items_ids.push(item_index);
+                item_index += 1;
+            }
+
+    
+            // Third line is for the operation
+            let third_line = lines.next().ok_or("Line for operation definition not found")?.trim().trim_end();
+            let operation = Operation::try_from(third_line)?;
+            
+            // Remaining lines are for the test
+            let monkey_test_lines = lines.collect::<Vec<&str>>().join("\n");
+            let monkey_test = MonkeyTest::try_from(
+                monkey_test_lines.as_str()
+            )?;
+
+            monkeys.push(BigMonkey {
+                inspected_items_count: 0,
+                items: monkey_initial_items_ids,
+                operation,
+                test: monkey_test
+            });
+        }
+
+        Ok(BigMonkeysReunion { item_test_cache: HashMap::new(), items, monkeys })
+    }
 }
 
 #[derive(Debug)]
 struct BigMonkey {
     inspected_items_count: usize,
-    items: VecDeque<BigMonkeyItem>,
+    items: Vec<usize>,
     operation: Operation,
     test: MonkeyTest,
 }
@@ -96,165 +174,36 @@ struct BigMonkeyItem {
 }
 
 // Thread implementation
-// impl BigMonkeyItem {
-//     fn is_divisible_by(&self, divider: usize) -> bool {
-//         let mut remainder = self.initial_worry_level % divider;
-//         for op in &self.operations {
-//             match op {
-//                 Operation::Addition(v) => {
-//                     match v {
-//                         OperationValue::Itself => {
-//                             remainder = (remainder * 2) % divider;
-//                         },
-//                         OperationValue::Value(n) => {
-//                             remainder = (remainder + n) % divider;
-//                         }
-//                     }
-//                 },
-//                 Operation::Multiplication(v) => {
-//                     match v {
-//                         OperationValue::Itself => {
-//                             remainder = (remainder * remainder) % divider;
-//                         },
-//                         OperationValue::Value(n) => {
-//                             remainder = (remainder * n) % divider;
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//         remainder == 0
-//     }
-// }
-
-impl BigMonkey {
-    fn has_items(&self) -> bool {
-        return self.items.len() > 0;
-    }
-
-    fn inspect_next_item(&mut self) -> Result<(BigMonkeyItem, usize), Box<dyn std::error::Error>> {
-        let mut item = self.items.pop_front().ok_or("No next item found")?;
-
-        self.inspected_items_count += 1;
-
-        // println!("  Monkey inspects an item");
-
-        item.operations.push(self.operation.clone());
-
-        // println!("      Operation is added to the item.");
-
-        let pass_test = self.pass_test_to_item(&item);
-
-        if pass_test {
-            // println!("      Current worry level is divisible by {}.", self.test.divider);
-            // println!("      Item with worry level {} is thrown to monkey {}.", new_worry_level, self.test.test_true_destination_index);
-            return Ok((item, self.test.test_true_destination_index));
-        } else {
-            // println!("      Current worry level is divisible by {}.", self.test.divider);
-            // println!("      Item with worry level {} is thrown to monkey {}.", new_worry_level, self.test.test_false_destination_index);
-            return Ok((item, self.test.test_false_destination_index));
-        }
-    }
-
-    // Thread implementation
-    // fn inspect_items(&mut self) -> Result<Vec<(BigMonkeyItem, usize)>, Box<dyn std::error::Error>> {
-    //     let divider = self.test.divider;
-    //     let test_true_destination_index = self.test.test_true_destination_index;
-    //     let test_false_destination_index = self.test.test_false_destination_index;
-    //     let mut children = vec![];
-    //     // for i in 0..self.items.len() {
-    //     //     let mut thrown_item = self.items[i];
-    //     // }
-    //     for thrown_item in &self.items {
-    //         self.inspected_items_count += 1;
-    //         let mut thrown_item = thrown_item.clone();
-    //         thrown_item.operations.push(self.operation.clone());
-    //         children.push(std::thread::spawn(move || -> (BigMonkeyItem, usize) {
-    //             let pass_test = thrown_item.is_divisible_by(divider);
-    //             let destination_index = if pass_test { test_true_destination_index } else { test_false_destination_index };
-    //             (thrown_item, destination_index)
-    //         }));
-    //     }
-    //     self.items.clear();
-    //     Ok(
-    //         children.into_iter()
-    //             .map(|c| c.join().unwrap())
-    //             .collect()
-    //     )
-    // }
-
-    fn receive_new_item(&mut self, item: BigMonkeyItem) {
-        self.items.push_back(item);
-    }
-
-    fn pass_test_to_item(&self, item: &BigMonkeyItem) -> bool {
-        let mut remainder = item.initial_worry_level % self.test.divider;
-        for op in &item.operations {
+impl BigMonkeyItem {
+    fn remainder(&self, divider: usize, cache: Option<&(usize, usize)>) -> usize {
+        let mut remainder = cache.and_then(|c| Some(c.0)).unwrap_or(self.initial_worry_level % divider);
+        let start_index = cache.and_then(|c| Some(c.1)).unwrap_or(0);
+        for i in start_index..self.operations.len() {
+            let op = &self.operations[i];
             match op {
                 Operation::Addition(v) => {
                     match v {
                         OperationValue::Itself => {
-                            remainder = (remainder * 2) % self.test.divider;
+                            remainder = (remainder * 2) % divider;
                         },
                         OperationValue::Value(n) => {
-                            remainder = (remainder + n) % self.test.divider;
+                            remainder = (remainder + n) % divider;
                         }
                     }
                 },
                 Operation::Multiplication(v) => {
                     match v {
                         OperationValue::Itself => {
-                            remainder = (remainder * remainder) % self.test.divider;
+                            remainder = (remainder * remainder) % divider;
                         },
                         OperationValue::Value(n) => {
-                            remainder = (remainder * n) % self.test.divider;
+                            remainder = (remainder * n) % divider;
                         }
                     }
                 }
             }
         }
-        remainder == 0
-    }
-}
-
-impl TryFrom<&str> for BigMonkey {
-    type Error = Box<dyn std::error::Error>;
-  
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let mut lines = value.lines();
-  
-        // Skip first line
-        lines.next();
-  
-        // Second line is for the matching items
-        let second_line = lines.next().ok_or("Line for matching items definition not found")?.trim().trim_end();
-        let items_prefix = "Starting items:";
-        if !second_line.starts_with(items_prefix) {
-          return Err(format!("Invalid line, expected {} <items>, got `{}`", items_prefix, second_line).into());
-        }
-        let items = second_line
-          .strip_prefix(items_prefix).or(Some("")).unwrap()
-          .split(",")
-          .map(|x| x.trim().parse::<usize>())
-          .map(|x| x.and_then(|n| Ok(BigMonkeyItem{
-            initial_worry_level: n,
-            operations: vec![]
-          })))
-          .collect::<Result<Vec<BigMonkeyItem>, std::num::ParseIntError>>()
-          .map_err(|_| "Unable to parse one of the given item into a number")?;
-
-  
-        // Third line is for the operation
-        let third_line = lines.next().ok_or("Line for operation definition not found")?.trim().trim_end();
-        let operation = Operation::try_from(third_line)?;
-        
-        // Remaining lines are for the test
-        let monkey_test_lines = lines.collect::<Vec<&str>>().join("\n");
-        let monkey_test = MonkeyTest::try_from(
-          monkey_test_lines.as_str()
-        )?;
-  
-        Ok(BigMonkey { inspected_items_count: 0, items: VecDeque::from(items), operation, test: monkey_test })
+        remainder
     }
 }
 
@@ -276,24 +225,23 @@ impl Monkey {
 
         self.inspected_items_count += 1;
 
-        // println!("  Monkey inspects an item with a worry level of {item}.");
-        println!("  Monkey inspects an item with a worry level of .");
+        println!("  Monkey inspects an item with a worry level of {item}.");
 
         let mut new_worry_level = self.compute_new_worry_level(item);
         println!("      New worry level is {new_worry_level}.");
 
         new_worry_level = new_worry_level / worry_divider;
-        // println!("      Monkey gets bored with item. Worry level is divided by {worry_divider} to {new_worry_level}.");
+        println!("      Monkey gets bored with item. Worry level is divided by {worry_divider} to {new_worry_level}.");
 
         let pass_test = &new_worry_level % self.test.divider == 0_usize;
 
         if pass_test {
-            // println!("      Current worry level is divisible by {}.", self.test.divider);
-            // println!("      Item with worry level {} is thrown to monkey {}.", new_worry_level, self.test.test_true_destination_index);
+            println!("      Current worry level is divisible by {}.", self.test.divider);
+            println!("      Item with worry level {} is thrown to monkey {}.", new_worry_level, self.test.test_true_destination_index);
             return Ok((new_worry_level, self.test.test_true_destination_index));
         } else {
-            // println!("      Current worry level is divisible by {}.", self.test.divider);
-            // println!("      Item with worry level {} is thrown to monkey {}.", new_worry_level, self.test.test_false_destination_index);
+            println!("      Current worry level is divisible by {}.", self.test.divider);
+            println!("      Item with worry level {} is thrown to monkey {}.", new_worry_level, self.test.test_false_destination_index);
             return Ok((new_worry_level, self.test.test_false_destination_index));
         }
     }
