@@ -322,7 +322,10 @@ mod tests {
 
     #[test]
     fn example_part_1_has_right_answer() {
-        assert_eq!(count_visible_trees("inputs/input-08-example.txt").unwrap(), 21);
+        assert_eq!(
+            count_visible_trees("inputs/input-08-example.txt").unwrap(),
+            21
+        );
     }
 
     #[test]
@@ -332,11 +335,17 @@ mod tests {
 
     #[test]
     fn example_part_2_has_right_answer() {
-        assert_eq!(find_highest_scenic_score("inputs/input-08-example.txt").unwrap(), 8);
+        assert_eq!(
+            find_highest_scenic_score("inputs/input-08-example.txt").unwrap(),
+            8
+        );
     }
 
     #[test]
     fn part_2_has_right_answer() {
-        assert_eq!(find_highest_scenic_score("inputs/input-08.txt").unwrap(), 383520);
+        assert_eq!(
+            find_highest_scenic_score("inputs/input-08.txt").unwrap(),
+            383520
+        );
     }
 }

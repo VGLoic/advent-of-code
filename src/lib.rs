@@ -1,26 +1,27 @@
 mod assignment;
 mod callories;
+mod cathod_ray_tube;
 mod directory;
 mod elf_crates;
+mod hill_climbing;
 mod marker;
+mod monkey_in_the_middle;
 mod rock_paper_scissors;
 mod rope_bridge;
 mod rucksacks;
 mod tree_house;
-mod cathod_ray_tube;
-mod monkey_in_the_middle;
-mod hill_climbing;
 
 pub enum Command {
     Help,
-    Exercise(Exercise)
+    Exercise(Exercise),
 }
 
 impl Command {
     pub fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         match self {
             Command::Help => {
-                println!("Advent of code, edition 2022
+                println!(
+                    "Advent of code, edition 2022
 
 Website: https://adventofcode.com/2022
 
@@ -53,12 +54,11 @@ Args:
         Run the exercise using exercise input instead of official input
     -h, --help
         List exercises and help
-                ");
+                "
+                );
                 Ok(())
-            },
-            Command::Exercise(exercise) => {
-                exercise.run()
             }
+            Command::Exercise(exercise) => exercise.run(),
         }
     }
 }
@@ -86,8 +86,7 @@ impl TryFrom<&Vec<String>> for Command {
             return Ok(Command::Help);
         }
 
-        return Exercise::try_from(args)
-            .and_then(|ex| Ok(Command::Exercise(ex)));
+        return Exercise::try_from(args).and_then(|ex| Ok(Command::Exercise(ex)));
     }
 }
 
@@ -136,7 +135,7 @@ impl TryFrom<&Vec<String>> for Exercise {
                 .into());
             }
         };
-        
+
         let example_short = "-ex".to_string();
         let example_long = "--example".to_string();
         let use_example = args[3..].contains(&example_short) || args[3..].contains(&example_long);
@@ -187,8 +186,12 @@ impl Exercise {
                     "inputs/input-02.txt"
                 };
                 let result = match part {
-                    Part::Part1 => rock_paper_scissors::compute_score_with_initial_strategy(filename)?,
-                    Part::Part2 => rock_paper_scissors::compute_score_with_second_strategy(filename)?,
+                    Part::Part1 => {
+                        rock_paper_scissors::compute_score_with_initial_strategy(filename)?
+                    }
+                    Part::Part2 => {
+                        rock_paper_scissors::compute_score_with_second_strategy(filename)?
+                    }
                 };
                 println!("Got {}", result);
             }
@@ -268,16 +271,20 @@ impl Exercise {
             }
             Exercise::RopeBridge(part, use_example) => {
                 let filename = match part {
-                    Part::Part1 => if *use_example {
+                    Part::Part1 => {
+                        if *use_example {
                             "inputs/input-09-example.txt"
                         } else {
                             "inputs/input-09.txt"
-                        },
-                        Part::Part2 => if *use_example {
+                        }
+                    }
+                    Part::Part2 => {
+                        if *use_example {
                             "inputs/input-09-example-part-2.txt"
                         } else {
                             "inputs/input-09.txt"
                         }
+                    }
                 };
                 let knots_number = match part {
                     Part::Part1 => 2,
@@ -285,7 +292,7 @@ impl Exercise {
                 };
                 let result = rope_bridge::count_distinct_tail_positions(filename, knots_number)?;
                 println!("Got {}", result);
-            },
+            }
             Exercise::CathodRayTube(part, use_example) => {
                 let filename = if *use_example {
                     "inputs/input-10-example.txt"
@@ -298,7 +305,7 @@ impl Exercise {
                 };
 
                 println!("Got \n{}", result)
-            },
+            }
             Exercise::MonkeyInTheMiddle(part, use_example) => {
                 let filename = if *use_example {
                     "inputs/input-11-example.txt"
@@ -311,7 +318,7 @@ impl Exercise {
                 };
 
                 println!("Got {}", result)
-            },
+            }
             Exercise::HillClimbing(part, use_example) => {
                 let filename = if *use_example {
                     "inputs/input-12-example.txt"
@@ -320,7 +327,7 @@ impl Exercise {
                 };
                 let result = match part {
                     Part::Part1 => hill_climbing::find_shortest_path(filename)?,
-                    Part::Part2 => hill_climbing::find_shortest_path(filename)?,
+                    Part::Part2 => hill_climbing::find_shortest_path_from_any_lowest_point(filename)?,
                 };
 
                 println!("Got {}", result)

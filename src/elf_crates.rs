@@ -221,22 +221,33 @@ mod tests {
 
     #[test]
     fn example_part_1_has_right_answer() {
-        assert_eq!(move_crates("inputs/input-05-example.txt", true).unwrap(), "CMZ");
+        assert_eq!(
+            move_crates("inputs/input-05-example.txt", true).unwrap(),
+            "CMZ"
+        );
     }
 
     #[test]
     fn part_1_has_right_answer() {
-        assert_eq!(move_crates("inputs/input-05.txt", true).unwrap(), "SHMSDGZVC");
+        assert_eq!(
+            move_crates("inputs/input-05.txt", true).unwrap(),
+            "SHMSDGZVC"
+        );
     }
 
     #[test]
     fn example_part_2_has_right_answer() {
-        assert_eq!(move_crates("inputs/input-05-example.txt", false).unwrap(), "MCD");
-    }
-    
-    #[test]
-    fn part_2_has_right_answer() {
-        assert_eq!(move_crates("inputs/input-05.txt", false).unwrap(), "VRZGHDFBQ");
+        assert_eq!(
+            move_crates("inputs/input-05-example.txt", false).unwrap(),
+            "MCD"
+        );
     }
 
+    #[test]
+    fn part_2_has_right_answer() {
+        assert_eq!(
+            move_crates("inputs/input-05.txt", false).unwrap(),
+            "VRZGHDFBQ"
+        );
+    }
 }

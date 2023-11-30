@@ -42,7 +42,10 @@ pub mod first_part {
 
         #[test]
         fn example_part_1_has_right_answer() {
-            assert_eq!(compute_priorities_sum("inputs/input-03-example.txt").unwrap(), 157);
+            assert_eq!(
+                compute_priorities_sum("inputs/input-03-example.txt").unwrap(),
+                157
+            );
         }
 
         #[test]
@@ -82,7 +85,10 @@ pub mod second_part {
 
         #[test]
         fn example_part_2_has_right_answer() {
-            assert_eq!(compute_priorities_sum("inputs/input-03-example.txt").unwrap(), 70);
+            assert_eq!(
+                compute_priorities_sum("inputs/input-03-example.txt").unwrap(),
+                70
+            );
         }
 
         #[test]

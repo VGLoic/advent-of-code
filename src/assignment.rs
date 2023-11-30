@@ -1,6 +1,8 @@
 use std::fs;
 
-pub fn count_fully_contained_assignement_in_pair(filename: &str) -> Result<u32, Box<dyn std::error::Error>> {
+pub fn count_fully_contained_assignement_in_pair(
+    filename: &str,
+) -> Result<u32, Box<dyn std::error::Error>> {
     let contents = fs::read_to_string(filename)?;
 
     let mut count = 0;
@@ -16,7 +18,9 @@ pub fn count_fully_contained_assignement_in_pair(filename: &str) -> Result<u32, 
     return Ok(count);
 }
 
-pub fn count_overlapping_assignement_in_pair(filename: &str) -> Result<u32, Box<dyn std::error::Error>> {
+pub fn count_overlapping_assignement_in_pair(
+    filename: &str,
+) -> Result<u32, Box<dyn std::error::Error>> {
     let contents = fs::read_to_string(filename)?;
 
     let mut count = 0;
@@ -111,21 +115,33 @@ mod tests {
 
     #[test]
     fn example_part_1_has_right_answer() {
-        assert_eq!(count_fully_contained_assignement_in_pair("inputs/input-04-example.txt").unwrap(), 2);
+        assert_eq!(
+            count_fully_contained_assignement_in_pair("inputs/input-04-example.txt").unwrap(),
+            2
+        );
     }
 
     #[test]
     fn part_1_has_right_answer() {
-        assert_eq!(count_fully_contained_assignement_in_pair("inputs/input-04.txt").unwrap(), 450);
+        assert_eq!(
+            count_fully_contained_assignement_in_pair("inputs/input-04.txt").unwrap(),
+            450
+        );
     }
 
     #[test]
     fn example_part_2_has_right_answer() {
-        assert_eq!(count_overlapping_assignement_in_pair("inputs/input-04-example.txt").unwrap(), 4);
+        assert_eq!(
+            count_overlapping_assignement_in_pair("inputs/input-04-example.txt").unwrap(),
+            4
+        );
     }
 
     #[test]
     fn part_2_has_right_answer() {
-        assert_eq!(count_overlapping_assignement_in_pair("inputs/input-04.txt").unwrap(), 837);
+        assert_eq!(
+            count_overlapping_assignement_in_pair("inputs/input-04.txt").unwrap(),
+            837
+        );
     }
 }
