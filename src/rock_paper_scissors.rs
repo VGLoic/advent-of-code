@@ -1,6 +1,8 @@
 use std::fs;
 
-pub fn compute_score_with_initial_strategy(filename: &str) -> Result<u32, Box<dyn std::error::Error>> {
+pub fn compute_score_with_initial_strategy(
+    filename: &str,
+) -> Result<u32, Box<dyn std::error::Error>> {
     let contents = fs::read_to_string(filename)?;
     let mut score = 0;
     for line in contents.lines() {
@@ -9,7 +11,9 @@ pub fn compute_score_with_initial_strategy(filename: &str) -> Result<u32, Box<dy
     Ok(score)
 }
 
-pub fn compute_score_with_second_strategy(filename: &str) -> Result<u32, Box<dyn std::error::Error>> {
+pub fn compute_score_with_second_strategy(
+    filename: &str,
+) -> Result<u32, Box<dyn std::error::Error>> {
     let contents = fs::read_to_string(filename)?;
     let mut score = 0;
     for line in contents.lines() {
@@ -174,21 +178,33 @@ mod tests {
 
     #[test]
     fn example_part_1_strategy_gives_expected_score() {
-        assert_eq!(compute_score_with_initial_strategy("inputs/input-02-example.txt").unwrap(), 15);
+        assert_eq!(
+            compute_score_with_initial_strategy("inputs/input-02-example.txt").unwrap(),
+            15
+        );
     }
 
     #[test]
     fn part_1_strategy_gives_expected_score() {
-        assert_eq!(compute_score_with_initial_strategy("inputs/input-02.txt").unwrap(), 13565);
+        assert_eq!(
+            compute_score_with_initial_strategy("inputs/input-02.txt").unwrap(),
+            13565
+        );
     }
 
     #[test]
     fn example_part_2_strategy_gives_expected_score() {
-        assert_eq!(compute_score_with_second_strategy("inputs/input-02-example.txt").unwrap(), 12);
+        assert_eq!(
+            compute_score_with_second_strategy("inputs/input-02-example.txt").unwrap(),
+            12
+        );
     }
 
     #[test]
     fn part_2_strategy_gives_expected_score() {
-        assert_eq!(compute_score_with_second_strategy("inputs/input-02.txt").unwrap(), 12424);
+        assert_eq!(
+            compute_score_with_second_strategy("inputs/input-02.txt").unwrap(),
+            12424
+        );
     }
 }

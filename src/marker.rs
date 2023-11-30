@@ -20,9 +20,7 @@ pub fn find_start_of_packet_marker_index(
         }
 
         i += 1;
-        previous_characters = iteration_str_as_chars
-            [i + 1 - target_length..i]
-            .to_vec();
+        previous_characters = iteration_str_as_chars[i + 1 - target_length..i].to_vec();
     }
 
     while i < iteration_str_as_chars.len() {
@@ -73,21 +71,33 @@ mod tests {
 
     #[test]
     fn example_target_length_of_4_should_give_expected_answer() {
-        assert_eq!(find_start_of_packet_marker_index("inputs/input-06-example.txt", 4).unwrap(), 7);
+        assert_eq!(
+            find_start_of_packet_marker_index("inputs/input-06-example.txt", 4).unwrap(),
+            7
+        );
     }
 
     #[test]
     fn target_length_of_4_should_give_expected_answer() {
-        assert_eq!(find_start_of_packet_marker_index("inputs/input-06.txt", 4).unwrap(), 1816);
+        assert_eq!(
+            find_start_of_packet_marker_index("inputs/input-06.txt", 4).unwrap(),
+            1816
+        );
     }
 
     #[test]
     fn example_target_length_of_14_should_give_expected_answer() {
-        assert_eq!(find_start_of_packet_marker_index("inputs/input-06-example.txt", 14).unwrap(), 19);
+        assert_eq!(
+            find_start_of_packet_marker_index("inputs/input-06-example.txt", 14).unwrap(),
+            19
+        );
     }
 
     #[test]
     fn target_length_of_14_should_give_expected_answer() {
-        assert_eq!(find_start_of_packet_marker_index("inputs/input-06.txt", 14).unwrap(), 2625);
+        assert_eq!(
+            find_start_of_packet_marker_index("inputs/input-06.txt", 14).unwrap(),
+            2625
+        );
     }
 }

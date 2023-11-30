@@ -244,21 +244,33 @@ mod tests {
 
     #[test]
     fn example_part_1_has_right_answer() {
-        assert_eq!(count_distinct_tail_positions("inputs/input-09-example.txt", 2).unwrap(), 13);
+        assert_eq!(
+            count_distinct_tail_positions("inputs/input-09-example.txt", 2).unwrap(),
+            13
+        );
     }
 
     #[test]
     fn part_1_has_right_answer() {
-        assert_eq!(count_distinct_tail_positions("inputs/input-09.txt", 2).unwrap(), 5930);
+        assert_eq!(
+            count_distinct_tail_positions("inputs/input-09.txt", 2).unwrap(),
+            5930
+        );
     }
 
     #[test]
     fn example_part_2_has_right_answer() {
-        assert_eq!(count_distinct_tail_positions("inputs/input-09-example-part-2.txt", 10).unwrap(), 36);
+        assert_eq!(
+            count_distinct_tail_positions("inputs/input-09-example-part-2.txt", 10).unwrap(),
+            36
+        );
     }
 
     #[test]
     fn part_2_has_right_answer() {
-        assert_eq!(count_distinct_tail_positions("inputs/input-09.txt", 10).unwrap(), 2443);
+        assert_eq!(
+            count_distinct_tail_positions("inputs/input-09.txt", 10).unwrap(),
+            2443
+        );
     }
 }

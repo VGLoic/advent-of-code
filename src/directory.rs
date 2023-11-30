@@ -25,7 +25,9 @@ pub fn find_sum_of_small_diretories(filename: &str) -> Result<usize, Box<dyn std
     Ok(sum)
 }
 
-pub fn find_smallest_dir_to_delete_for_update(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
+pub fn find_smallest_dir_to_delete_for_update(
+    filename: &str,
+) -> Result<usize, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(filename)?;
 
     let file_system = parse_input_to_file_system(content)?;
@@ -318,21 +320,33 @@ mod tests {
 
     #[test]
     fn example_part_1_has_right_answer() {
-        assert_eq!(find_sum_of_small_diretories("inputs/input-07-example.txt").unwrap(), 95437);
+        assert_eq!(
+            find_sum_of_small_diretories("inputs/input-07-example.txt").unwrap(),
+            95437
+        );
     }
 
     #[test]
     fn part_1_has_right_answer() {
-        assert_eq!(find_sum_of_small_diretories("inputs/input-07.txt").unwrap(), 1449447);
+        assert_eq!(
+            find_sum_of_small_diretories("inputs/input-07.txt").unwrap(),
+            1449447
+        );
     }
 
     #[test]
     fn example_part_2_has_right_answer() {
-        assert_eq!(find_smallest_dir_to_delete_for_update("inputs/input-07-example.txt").unwrap(), 24933642);
+        assert_eq!(
+            find_smallest_dir_to_delete_for_update("inputs/input-07-example.txt").unwrap(),
+            24933642
+        );
     }
 
     #[test]
     fn part_2_has_right_answer() {
-        assert_eq!(find_smallest_dir_to_delete_for_update("inputs/input-07.txt").unwrap(), 8679207);
+        assert_eq!(
+            find_smallest_dir_to_delete_for_update("inputs/input-07.txt").unwrap(),
+            8679207
+        );
     }
 }

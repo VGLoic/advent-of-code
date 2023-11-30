@@ -1,6 +1,8 @@
 use std::fs;
 
-pub fn find_max_callories_on_single_elf(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
+pub fn find_max_callories_on_single_elf(
+    filename: &str,
+) -> Result<usize, Box<dyn std::error::Error>> {
     let contents = fs::read_to_string(filename)?;
     let mut max = 0;
     let mut elf_sum = 0;
@@ -56,22 +58,33 @@ mod tests {
 
     #[test]
     fn example_part_1_should_give_expected_maximum_callories_on_single_elf() {
-        assert_eq!(find_max_callories_on_single_elf("inputs/input-01-example.txt").unwrap(), 24000);
+        assert_eq!(
+            find_max_callories_on_single_elf("inputs/input-01-example.txt").unwrap(),
+            24000
+        );
     }
 
     #[test]
     fn part_1_should_give_expected_maximum_callories_on_single_elf() {
-        assert_eq!(find_max_callories_on_single_elf("inputs/input-01.txt").unwrap(), 71471);
+        assert_eq!(
+            find_max_callories_on_single_elf("inputs/input-01.txt").unwrap(),
+            71471
+        );
     }
 
     #[test]
     fn example_part_2_should_give_expected_sum_of_three_most_callories() {
-        assert_eq!(find_sum_of_maximums_callories("inputs/input-01-example.txt", 3).unwrap(), 45000);
+        assert_eq!(
+            find_sum_of_maximums_callories("inputs/input-01-example.txt", 3).unwrap(),
+            45000
+        );
     }
 
     #[test]
     fn part_2_should_give_expected_sum_of_three_most_callories() {
-        assert_eq!(find_sum_of_maximums_callories("inputs/input-01.txt", 3).unwrap(), 211189);
+        assert_eq!(
+            find_sum_of_maximums_callories("inputs/input-01.txt", 3).unwrap(),
+            211189
+        );
     }
-
 }
