@@ -327,7 +327,9 @@ impl Exercise {
                 };
                 let result = match part {
                     Part::Part1 => hill_climbing::find_shortest_path(filename)?,
-                    Part::Part2 => hill_climbing::find_shortest_path_from_any_lowest_point(filename)?,
+                    Part::Part2 => {
+                        hill_climbing::find_shortest_path_from_any_lowest_point(filename)?
+                    }
                 };
 
                 println!("Got {}", result)
