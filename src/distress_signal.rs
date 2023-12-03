@@ -39,10 +39,12 @@ pub fn sum_over_right_pair_indices(filename: &str) -> Result<usize, Box<dyn std:
                     sum += pair_index;
                 }
 
-                println!("Got both sides:
+                println!(
+                    "Got both sides:
     Index {pair_index}
     Order good: {right_order}
-                ");
+                "
+                );
 
                 pair_index += 1;
             }
@@ -67,10 +69,10 @@ impl Packet {
             match item.compare(&right_packet.items[index]) {
                 ComparisonResult::RightOrder => {
                     return true;
-                },
+                }
                 ComparisonResult::WrongOrder => {
                     return false;
-                },
+                }
                 ComparisonResult::Undecided => {}
             };
 
@@ -150,7 +152,7 @@ enum Item {
 enum ComparisonResult {
     RightOrder,
     WrongOrder,
-    Undecided
+    Undecided,
 }
 
 impl Item {
@@ -169,19 +171,19 @@ impl Item {
                             return ComparisonResult::WrongOrder;
                         }
                         return ComparisonResult::Undecided;
-                    },
+                    }
                     Item::List(_) => {
                         let upgraded_left_item = Item::List(vec![Item::Value(*a)]);
-                        return upgraded_left_item.compare(right_item)
+                        return upgraded_left_item.compare(right_item);
                     }
                 }
-            },
+            }
             Item::List(left_l) => {
                 match right_item {
                     Item::Value(b) => {
                         let upgraded_right_item = Item::List(vec![Item::Value(*b)]);
                         return self.compare(&upgraded_right_item);
-                    },
+                    }
                     Item::List(right_l) => {
                         let right_item_len = right_l.len();
 
@@ -196,11 +198,11 @@ impl Item {
                                 ComparisonResult::RightOrder => {
                                     // println!("Right order for {:?} with {:?}", left_l, right_item);
                                     return ComparisonResult::RightOrder;
-                                },
+                                }
                                 ComparisonResult::WrongOrder => {
                                     // println!("Wrong order for {:?} with {:?}", left_l, right_item);
                                     return ComparisonResult::WrongOrder;
-                                },
+                                }
                                 ComparisonResult::Undecided => {}
                             };
 
@@ -210,7 +212,7 @@ impl Item {
                         if i == right_item_len {
                             return ComparisonResult::Undecided;
                         }
-                        
+
                         // println!("Left side ran out of items so good {:?} & {:?}", left_l, right_l);
                         return ComparisonResult::RightOrder;
                     }
