@@ -2,6 +2,7 @@ mod assignment;
 mod callories;
 mod cathod_ray_tube;
 mod directory;
+mod distress_signal;
 mod elf_crates;
 mod hill_climbing;
 mod marker;
@@ -42,6 +43,7 @@ Exercise list (in the ascending order):
     - cathod-ray-tube,
     - monkey-in-the-middle,
     - hill-climbing,
+    - distress-signals.
 
 Part:
     - part_1,
@@ -103,6 +105,7 @@ pub enum Exercise {
     CathodRayTube(Part, bool),
     MonkeyInTheMiddle(Part, bool),
     HillClimbing(Part, bool),
+    DistressSignals(Part, bool),
 }
 
 pub enum Part {
@@ -153,6 +156,7 @@ impl TryFrom<&Vec<String>> for Exercise {
             "cathod-ray-tube" => Ok(Exercise::CathodRayTube(part, use_example)),
             "monkey-in-the-middle" => Ok(Exercise::MonkeyInTheMiddle(part, use_example)),
             "hill-climbing" => Ok(Exercise::HillClimbing(part, use_example)),
+            "distress-signals" => Ok(Exercise::DistressSignals(part, use_example)),
             other => {
                 return Err(format!(
                     "Unknown exercise chosen, please choose one of the available exercise, got {}",
@@ -330,6 +334,19 @@ impl Exercise {
                     Part::Part2 => {
                         hill_climbing::find_shortest_path_from_any_lowest_point(filename)?
                     }
+                };
+
+                println!("Got {}", result)
+            }
+            Exercise::DistressSignals(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-13-example.txt"
+                } else {
+                    "inputs/input-13.txt"
+                };
+                let result = match part {
+                    Part::Part1 => distress_signal::sum_over_right_pair_indices(filename)?,
+                    Part::Part2 => distress_signal::sum_over_right_pair_indices(filename)?,
                 };
 
                 println!("Got {}", result)
