@@ -36,7 +36,7 @@ pub fn sum_over_right_pair_indices(filename: &str) -> Result<usize, Box<dyn std:
     Index {pair_index}
     Order good: {}
                 ",
-                order == Ordering::Greater
+                    order == Ordering::Greater
                 );
 
                 pair_index += 1;
@@ -55,22 +55,21 @@ pub fn find_decoder_key(filename: &str) -> Result<usize, Box<dyn std::error::Err
     for raw_pair in content.split("\n\n") {
         for packet_line in raw_pair.lines() {
             packets.push(Packet::try_from(packet_line)?);
-
         }
     }
-    
+
     // Add divider packets
     let first_divider_packet = Packet {
-        items: vec![Item::List(vec![Item::Value(2)])]
+        items: vec![Item::List(vec![Item::Value(2)])],
     };
     let second_divider_packet = Packet {
-        items: vec![Item::List(vec![Item::Value(6)])]
+        items: vec![Item::List(vec![Item::Value(6)])],
     };
 
     packets.push(first_divider_packet.clone());
     packets.push(second_divider_packet.clone());
 
-    packets.sort_unstable_by(|a, b|  b.cmp(a));
+    packets.sort_unstable_by(|a, b| b.cmp(a));
 
     let mut first_divider_packet_index = None;
     let mut second_divider_packet_index = None;
@@ -90,7 +89,6 @@ pub fn find_decoder_key(filename: &str) -> Result<usize, Box<dyn std::error::Err
                 second_divider_packet_index = Some(index);
             }
         }
-
 
         if first_divider_packet_index.is_some() && second_divider_packet_index.is_some() {
             return Ok(first_divider_packet_index.unwrap() * second_divider_packet_index.unwrap());
@@ -328,9 +326,6 @@ mod tests {
 
     #[test]
     fn part_2_has_right_answer() {
-        assert_eq!(
-            find_decoder_key("inputs/input-13.txt").unwrap(),
-            20304
-        );
+        assert_eq!(find_decoder_key("inputs/input-13.txt").unwrap(), 20304);
     }
 }
