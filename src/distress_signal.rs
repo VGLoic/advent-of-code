@@ -1,4 +1,4 @@
-use std;
+use std::{self, cmp::Ordering};
 
 pub fn sum_over_right_pair_indices(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(filename)?;
@@ -15,17 +15,9 @@ pub fn sum_over_right_pair_indices(filename: &str) -> Result<usize, Box<dyn std:
                 )
                 .into());
             }
-            if !side_line.starts_with("[") || !side_line.ends_with("]") {
-                return Err(format!(
-                    "Invalid side string, expected to have format `[...]`, got {}",
-                    side_line
-                )
-                .into());
-            }
 
             println!("Line {side_line}");
             let packet = Packet::try_from(side_line)?;
-            // println!("Got items {:?}\n\n", side.items);
 
             packets.push(packet);
 
@@ -33,17 +25,18 @@ pub fn sum_over_right_pair_indices(filename: &str) -> Result<usize, Box<dyn std:
                 let left_side = &packets[0];
                 let right_side = &packets[1];
 
-                let right_order = left_side.are_items_in_right_order(right_side);
+                let order = left_side.cmp(right_side);
 
-                if right_order {
+                if order == Ordering::Greater {
                     sum += pair_index;
                 }
 
                 println!(
                     "Got both sides:
     Index {pair_index}
-    Order good: {right_order}
-                "
+    Order good: {}
+                ",
+                order == Ordering::Greater
                 );
 
                 pair_index += 1;
@@ -54,24 +47,80 @@ pub fn sum_over_right_pair_indices(filename: &str) -> Result<usize, Box<dyn std:
     Ok(sum)
 }
 
+pub fn find_decoder_key(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
+    let content = std::fs::read_to_string(filename)?;
+
+    let mut packets = vec![];
+
+    for raw_pair in content.split("\n\n") {
+        for packet_line in raw_pair.lines() {
+            packets.push(Packet::try_from(packet_line)?);
+
+        }
+    }
+    
+    // Add divider packets
+    let first_divider_packet = Packet {
+        items: vec![Item::List(vec![Item::Value(2)])]
+    };
+    let second_divider_packet = Packet {
+        items: vec![Item::List(vec![Item::Value(6)])]
+    };
+
+    packets.push(first_divider_packet.clone());
+    packets.push(second_divider_packet.clone());
+
+    packets.sort_unstable_by(|a, b|  b.cmp(a));
+
+    let mut first_divider_packet_index = None;
+    let mut second_divider_packet_index = None;
+    let mut index = 1;
+    for packet in packets {
+        if packet.cmp(&first_divider_packet) == Ordering::Equal {
+            if first_divider_packet_index.is_some() {
+                return Err("Already found first divider packet :(".into());
+            } else {
+                first_divider_packet_index = Some(index);
+            }
+        }
+        if packet.cmp(&second_divider_packet) == Ordering::Equal {
+            if second_divider_packet_index.is_some() {
+                return Err("Already found second divider packet :(".into());
+            } else {
+                second_divider_packet_index = Some(index);
+            }
+        }
+
+
+        if first_divider_packet_index.is_some() && second_divider_packet_index.is_some() {
+            return Ok(first_divider_packet_index.unwrap() * second_divider_packet_index.unwrap());
+        }
+
+        index += 1;
+    }
+
+    return Err("Unable to have found divider packets".into());
+}
+
+#[derive(Debug, Clone)]
 struct Packet {
     items: Vec<Item>,
 }
 
 impl Packet {
-    fn are_items_in_right_order(&self, right_packet: &Packet) -> bool {
+    fn cmp(&self, right_packet: &Packet) -> Ordering {
         let mut index = 0;
         for item in &self.items {
             if index >= right_packet.items.len() {
-                return false;
+                return Ordering::Less;
             }
 
             match item.compare(&right_packet.items[index]) {
                 ComparisonResult::RightOrder => {
-                    return true;
+                    return Ordering::Greater;
                 }
                 ComparisonResult::WrongOrder => {
-                    return false;
+                    return Ordering::Less;
                 }
                 ComparisonResult::Undecided => {}
             };
@@ -79,7 +128,11 @@ impl Packet {
             index += 1;
         }
 
-        return true;
+        if index == right_packet.items.len() {
+            return Ordering::Equal;
+        }
+
+        return Ordering::Greater;
     }
 }
 
@@ -143,7 +196,7 @@ fn parse_items(value: &str) -> Result<Vec<Item>, Box<dyn std::error::Error>> {
     Ok(items)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Item {
     Value(usize),
     List(Vec<Item>),
@@ -262,6 +315,22 @@ mod tests {
         assert_eq!(
             sum_over_right_pair_indices("inputs/input-13.txt").unwrap(),
             5682
+        );
+    }
+
+    #[test]
+    fn example_part_2_has_right_answer() {
+        assert_eq!(
+            find_decoder_key("inputs/input-13-example.txt").unwrap(),
+            140
+        );
+    }
+
+    #[test]
+    fn part_2_has_right_answer() {
+        assert_eq!(
+            find_decoder_key("inputs/input-13.txt").unwrap(),
+            20304
         );
     }
 }

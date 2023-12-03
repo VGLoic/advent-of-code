@@ -346,7 +346,7 @@ impl Exercise {
                 };
                 let result = match part {
                     Part::Part1 => distress_signal::sum_over_right_pair_indices(filename)?,
-                    Part::Part2 => distress_signal::sum_over_right_pair_indices(filename)?,
+                    Part::Part2 => distress_signal::find_decoder_key(filename)?,
                 };
 
                 println!("Got {}", result)
