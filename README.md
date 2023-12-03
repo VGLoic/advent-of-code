@@ -29,3 +29,4 @@ Where `part` is either `part_1` or `part_2` and exercise name is defined as foll
 - Exercise #11: `monkey-in-the-middle`,
 - Exercise #12: `hill-climbing`,
 - Exercise #13: `distress-signal`,
+- Exercise #14: `regolith-reservoir`,
