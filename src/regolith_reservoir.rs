@@ -39,10 +39,21 @@ pub fn find_number_of_resting_units_of_sand(filename: &str) -> Result<usize, Box
     println!("Minimum x {min_x}");
     println!("Maximum x {max_x}");
 
-    Ok(3)
+    let mut sand_unit_stable_count = 0;
+    loop {
+        match grid.let_sand_unit_fall()? {
+            FallPosition::Void => {
+                println!("A sand unit has fallen into the void! Stopping there. Printing snaphot of the grid:\n{grid}");
+                return Ok(sand_unit_stable_count);
+            },
+            FallPosition::Point(_) => {
+                sand_unit_stable_count += 1;
+            }
+        };
+    };
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum CaveElement {
     Air,
     Rock,
@@ -52,6 +63,11 @@ struct Cave {
     x_offset: usize,
     y_offset: usize,
     grid: Vec<Vec<CaveElement>>
+}
+
+enum FallPosition {
+    Void,
+    Point(Point)
 }
 
 impl Cave {
@@ -93,8 +109,68 @@ impl Cave {
         self.y_offset
     }
 
+    fn sand_starting_point(&self) -> Point {
+        Point { x: 500, y: 0 }
+    }
+
     fn y_dimension(&self) -> usize {
         self.grid.len()
+    }
+
+    fn get_element(&self, p: &Point) -> CaveElement {
+        if self.is_out_of_bound(p) {
+            return CaveElement::Air;
+        }
+        return self.grid[p.y - self.y_offset][p.x - self.x_offset].clone();
+    }
+
+    fn find_next_position(&self, p: &Point) -> Option<Point> {
+        let point_below = Point { x: p.x, y: p.y + 1 };
+        if self.get_element(&point_below) == CaveElement::Air {
+            return Some(point_below);
+        }
+
+        // We do not handle the case where p.x == 0
+        let point_below_and_left = Point { x: p.x - 1, y: p.y + 1};
+        if self.get_element(&point_below_and_left) == CaveElement::Air {
+            return Some(point_below_and_left);
+        }
+
+        let point_below_and_right = Point { x: p.x + 1, y: p.y + 1};
+        if self.get_element(&point_below_and_right) == CaveElement::Air {
+            return Some(point_below_and_right);
+        }
+
+        return None;
+    }
+
+    fn is_out_of_bound(&self, p: &Point) -> bool {
+        if p.x < self.x_offset || p.x >= self.x_offset + self.x_dimension() {
+            return true;
+        }
+        if p.y < self.y_offset || p.y >= self.y_offset + self.y_dimension() {
+            return true;
+        }
+        return false;
+    }
+
+    fn let_sand_unit_fall(&mut self) -> Result<FallPosition, Box<dyn std::error::Error>> {
+        let mut p = self.sand_starting_point();
+
+        loop {
+            match self.find_next_position(&p) {
+                None => {
+                    self.grid[p.y - self.y_offset][p.x - self.x_offset] = CaveElement::Sand;
+                    return Ok(FallPosition::Point(p))
+                },
+                Some(next_p) => {
+                    if self.is_out_of_bound(&next_p) {
+                        return Ok(FallPosition::Void);
+                    }
+                    p = next_p;
+                }
+            };
+        }
     }
 
     fn draw_rock_line(&mut self, a: &Point, b: &Point) -> Result<(), Box<dyn std::error::Error>> {
@@ -180,12 +256,16 @@ impl std::fmt::Display for Cave {
             displayed += r.to_string().as_str();
             displayed += " ";
             for i in 0..self.x_dimension() {
-                let el = match self.grid[j - self.y_offset][i] {
-                    CaveElement::Air => '.',
-                    CaveElement::Sand => 'o',
-                    CaveElement::Rock => '#'
-                };
-                displayed.push(el);
+                if j == 0 && i + self.x_offset == 500 {
+                    displayed.push('+');
+                } else {
+                    let el = match self.grid[j - self.y_offset][i] {
+                        CaveElement::Air => '.',
+                        CaveElement::Sand => 'o',
+                        CaveElement::Rock => '#'
+                    };
+                    displayed.push(el);
+                }
                 displayed.push(' ');
             }
             displayed += "\n";
@@ -204,6 +284,14 @@ mod tests {
         assert_eq!(
             find_number_of_resting_units_of_sand("inputs/input-14-example.txt").unwrap(),
             24
+        );
+    }
+
+    #[test]
+    fn part_1_should_give_expected_answer() {
+        assert_eq!(
+            find_number_of_resting_units_of_sand("inputs/input-14.txt").unwrap(),
+            795
         );
     }
 }
