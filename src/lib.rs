@@ -7,6 +7,7 @@ mod elf_crates;
 mod hill_climbing;
 mod marker;
 mod monkey_in_the_middle;
+mod regolith_reservoir;
 mod rock_paper_scissors;
 mod rope_bridge;
 mod rucksacks;
@@ -43,7 +44,8 @@ Exercise list (in the ascending order):
     - cathod-ray-tube,
     - monkey-in-the-middle,
     - hill-climbing,
-    - distress-signals.
+    - distress-signals,
+    - regolith-reservoir.
 
 Part:
     - part_1,
@@ -106,6 +108,7 @@ pub enum Exercise {
     MonkeyInTheMiddle(Part, bool),
     HillClimbing(Part, bool),
     DistressSignals(Part, bool),
+    RegolithReservoir(Part, bool),
 }
 
 pub enum Part {
@@ -157,6 +160,7 @@ impl TryFrom<&Vec<String>> for Exercise {
             "monkey-in-the-middle" => Ok(Exercise::MonkeyInTheMiddle(part, use_example)),
             "hill-climbing" => Ok(Exercise::HillClimbing(part, use_example)),
             "distress-signals" => Ok(Exercise::DistressSignals(part, use_example)),
+            "regolith-reservoir" => Ok(Exercise::RegolithReservoir(part, use_example)),
             other => {
                 return Err(format!(
                     "Unknown exercise chosen, please choose one of the available exercise, got {}",
@@ -347,6 +351,19 @@ impl Exercise {
                 let result = match part {
                     Part::Part1 => distress_signal::sum_over_right_pair_indices(filename)?,
                     Part::Part2 => distress_signal::find_decoder_key(filename)?,
+                };
+
+                println!("Got {}", result)
+            }
+            Exercise::RegolithReservoir(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-14-example.txt"
+                } else {
+                    "inputs/input-14.txt"
+                };
+                let result = match part {
+                    Part::Part1 => regolith_reservoir::find_number_of_resting_units_of_sand_before_falling_in_void(filename)?,
+                    Part::Part2 => regolith_reservoir::find_number_of_resting_units_of_sand_before_blocked(filename)?,
                 };
 
                 println!("Got {}", result)
