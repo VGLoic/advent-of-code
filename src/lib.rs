@@ -7,11 +7,11 @@ mod elf_crates;
 mod hill_climbing;
 mod marker;
 mod monkey_in_the_middle;
+mod regolith_reservoir;
 mod rock_paper_scissors;
 mod rope_bridge;
 mod rucksacks;
 mod tree_house;
-mod regolith_reservoir;
 
 pub enum Command {
     Help,
@@ -354,7 +354,7 @@ impl Exercise {
                 };
 
                 println!("Got {}", result)
-            },
+            }
             Exercise::RegolithReservoir(part, use_example) => {
                 let filename = if *use_example {
                     "inputs/input-14-example.txt"
@@ -367,7 +367,7 @@ impl Exercise {
                 };
 
                 println!("Got {}", result)
-            },
+            }
         };
         Ok(())
     }
