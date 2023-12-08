@@ -1,6 +1,6 @@
 use std;
 
-pub fn find_number_of_resting_units_of_sand(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
+pub fn find_number_of_resting_units_of_sand_before_falling_in_void(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(filename)?;
 
     let mut min_x = usize::MAX;
@@ -53,6 +53,76 @@ pub fn find_number_of_resting_units_of_sand(filename: &str) -> Result<usize, Box
     };
 }
 
+pub fn find_number_of_resting_units_of_sand_before_blocked(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
+    let content = std::fs::read_to_string(filename)?;
+
+    let mut min_x = usize::MAX;
+    let mut max_x = 0;
+    let mut max_y = 0;
+
+    let mut rock_set = vec![];
+    for line in content.lines() {
+        let mut points = vec![];
+        for raw_point in line.split("->") {
+            let point = Point::try_from(raw_point.trim().trim_end())?;
+            if point.x > max_x {
+                max_x = point.x;
+            }
+            if point.x < min_x {
+                min_x = point.x;
+            }
+            if point.y > max_y {
+                max_y = point.y;
+            }
+            println!("Point: {point}");
+            points.push(point);
+        }
+        rock_set.push(points);
+    }
+
+    max_y += 2;
+
+    let theoretical_sufficient_x_dimension = 2 * max_y + 1;
+    let x_dimension = std::cmp::max(
+            std::cmp::max(
+                theoretical_sufficient_x_dimension,
+                2 * (500 - min_x) + 1,
+            ),
+            2 * (max_x - 500) + 1
+        );
+    let min_x = 500 - (x_dimension - 1) / 2;
+    let max_x = 500 + (x_dimension - 1) / 2;
+
+
+    let mut grid = Cave::build_empty_cave(min_x, max_x - min_x + 1, 0, max_y + 1)?;
+
+    for i in 0..rock_set.len() {
+        for j in 1..rock_set[i].len() {
+            grid.draw_rock_line(&rock_set[i][j - 1], &rock_set[i][j])?;
+        }
+    }
+
+    grid.draw_rock_line(&Point {x: min_x, y: max_y }, &Point { x: max_x, y: max_y })?;
+
+    println!("Grid {grid}");
+
+    let mut sand_unit_stable_count = 0;
+    loop {
+        match grid.let_sand_unit_fall()? {
+            FallPosition::Void => {
+                return Err("It is not expected to have sand falling in the void!".into());
+            },
+            FallPosition::Point(p) => {
+                sand_unit_stable_count += 1;
+                if p == grid.sand_starting_point() {
+                    println!("Falling sand is blocked! \n{grid}");
+                    return Ok(sand_unit_stable_count);
+                }
+            }
+        };
+    };
+}
+
 #[derive(Debug, Clone, PartialEq)]
 enum CaveElement {
     Air,
@@ -67,7 +137,7 @@ struct Cave {
 
 enum FallPosition {
     Void,
-    Point(Point)
+    Point(Point),
 }
 
 impl Cave {
@@ -205,6 +275,7 @@ impl Cave {
     }
 }
 
+#[derive(PartialEq)]
 struct Point {
     x: usize,
     y: usize
@@ -282,7 +353,7 @@ mod tests {
     #[test]
     fn example_part_1_should_give_expected_answer() {
         assert_eq!(
-            find_number_of_resting_units_of_sand("inputs/input-14-example.txt").unwrap(),
+            find_number_of_resting_units_of_sand_before_falling_in_void("inputs/input-14-example.txt").unwrap(),
             24
         );
     }
@@ -290,8 +361,24 @@ mod tests {
     #[test]
     fn part_1_should_give_expected_answer() {
         assert_eq!(
-            find_number_of_resting_units_of_sand("inputs/input-14.txt").unwrap(),
+            find_number_of_resting_units_of_sand_before_falling_in_void("inputs/input-14.txt").unwrap(),
             795
+        );
+    }
+
+    #[test]
+    fn example_part_2_should_give_expected_answer() {
+        assert_eq!(
+            find_number_of_resting_units_of_sand_before_blocked("inputs/input-14-example.txt").unwrap(),
+            93
+        );
+    }
+
+    #[test]
+    fn part_2_should_give_expected_answer() {
+        assert_eq!(
+            find_number_of_resting_units_of_sand_before_blocked("inputs/input-14.txt").unwrap(),
+            30214
         );
     }
 }

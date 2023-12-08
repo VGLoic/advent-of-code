@@ -362,8 +362,8 @@ impl Exercise {
                     "inputs/input-14.txt"
                 };
                 let result = match part {
-                    Part::Part1 => regolith_reservoir::find_number_of_resting_units_of_sand(filename)?,
-                    Part::Part2 => regolith_reservoir::find_number_of_resting_units_of_sand(filename)?,
+                    Part::Part1 => regolith_reservoir::find_number_of_resting_units_of_sand_before_falling_in_void(filename)?,
+                    Part::Part2 => regolith_reservoir::find_number_of_resting_units_of_sand_before_blocked(filename)?,
                 };
 
                 println!("Got {}", result)
