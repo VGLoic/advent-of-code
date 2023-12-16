@@ -31,7 +31,7 @@ pub fn find_number_of_covered_positions_in_row(
     println!("Min x: {min_x}, max x: {max_x}");
 
     let mut covered_positions = 0;
-    for x in min_x..max_x+1 {
+    for x in min_x..max_x + 1 {
         if occupied_beacons_x_positions.contains(&x) {
             // println!("Found beacon at {x}");
             continue;
@@ -88,17 +88,18 @@ pub fn find_distress_beacon_tuning_frequency(
     }
 
     sensors.sort_unstable_by(|a, b| b.position.x.cmp(&a.position.x));
-    
 
     min_x = std::cmp::max(0, min_x);
     max_x = std::cmp::min(4_000_000, max_x);
     min_y = std::cmp::max(0, min_y);
     max_y = std::cmp::min(4_000_000, max_y);
 
-    println!("Boundaries:
+    println!(
+        "Boundaries:
         X: {min_x} to {max_x}
         Y: {min_y} to {max_y}
-    ");
+    "
+    );
 
     let mut x = min_x;
     let mut y = min_y;
@@ -107,7 +108,8 @@ pub fn find_distress_beacon_tuning_frequency(
         let mut is_position_covered = false;
         for sensor in &sensors {
             if sensor.within_distance(&p) {
-                let available_x_distance = sensor.closest_beacon_distance as isize - (p.y - sensor.position.y).abs();
+                let available_x_distance =
+                    sensor.closest_beacon_distance as isize - (p.y - sensor.position.y).abs();
                 let next_x = sensor.position.x + available_x_distance;
                 if next_x > max_x {
                     // println!("New line {}", y + 1);
@@ -126,14 +128,17 @@ pub fn find_distress_beacon_tuning_frequency(
         }
         if !is_position_covered {
             let tuning_frequency = p.x * 4_000_000 + p.y;
-            println!("Found uncovered position:
+            println!(
+                "Found uncovered position:
                 X: {}
                 Y: {}
                 tuning frequency: {}
-            ", p.x, p.y, tuning_frequency);
-            return Ok(tuning_frequency as usize)
+            ",
+                p.x, p.y, tuning_frequency
+            );
+            return Ok(tuning_frequency as usize);
         }
-    };
+    }
     Err("Unable to have found an uncovered position".into())
 }
 
@@ -176,18 +181,38 @@ impl TryFrom<&str> for Sensor {
         if captures.len() < 4 {
             return Err(format!("Unable to parse line into sensor, expected line of format `Sensor at x=<value>, y=<value>: closest beacon is at x=<value>, y=<value>`. Got {}", value).into());
         }
-        let sensor_x = captures[1].parse::<isize>().map_err(|e| format!("Invalid numerical value for the `x` position of sensor. Got err {}", e))?;
-        let sensor_y = captures[2].parse::<isize>().map_err(|e| format!("Invalid numerical value for the `y` position of sensor. Got err {}", e))?;
-        let beacon_x = captures[3].parse::<isize>().map_err(|e| format!("Invalid numerical value for the `x` position of beacon. Got err {}", e))?;
-        let beacon_y = captures[4].parse::<isize>().map_err(|e| format!("Invalid numerical value for the `y` position of beacon. Got err {}", e))?;
+        let sensor_x = captures[1].parse::<isize>().map_err(|e| {
+            format!(
+                "Invalid numerical value for the `x` position of sensor. Got err {}",
+                e
+            )
+        })?;
+        let sensor_y = captures[2].parse::<isize>().map_err(|e| {
+            format!(
+                "Invalid numerical value for the `y` position of sensor. Got err {}",
+                e
+            )
+        })?;
+        let beacon_x = captures[3].parse::<isize>().map_err(|e| {
+            format!(
+                "Invalid numerical value for the `x` position of beacon. Got err {}",
+                e
+            )
+        })?;
+        let beacon_y = captures[4].parse::<isize>().map_err(|e| {
+            format!(
+                "Invalid numerical value for the `y` position of beacon. Got err {}",
+                e
+            )
+        })?;
 
-//         println!("New sensor:
-//         X: {sensor_x}
-//         Y: {sensor_y}
-// With beacon
-//         X: {beacon_x}
-//         Y: {beacon_y}
-//         ");
+        //         println!("New sensor:
+        //         X: {sensor_x}
+        //         Y: {sensor_y}
+        // With beacon
+        //         X: {beacon_x}
+        //         Y: {beacon_y}
+        //         ");
 
         let sensor_position = Point::new(sensor_x, sensor_y);
         let beacon_position = Point::new(beacon_x, beacon_y);

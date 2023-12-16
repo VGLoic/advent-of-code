@@ -380,9 +380,9 @@ impl Exercise {
                 };
                 let row = if *use_example { 10 } else { 2_000_000 };
                 let result = match part {
-                    Part::Part1 => {
-                        beacon_exclusion_zone::find_number_of_covered_positions_in_row(filename, row)?
-                    }
+                    Part::Part1 => beacon_exclusion_zone::find_number_of_covered_positions_in_row(
+                        filename, row,
+                    )?,
                     Part::Part2 => {
                         beacon_exclusion_zone::find_distress_beacon_tuning_frequency(filename)?
                     }
