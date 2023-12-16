@@ -1,4 +1,5 @@
 mod assignment;
+mod beacon_exclusion_zone;
 mod callories;
 mod cathod_ray_tube;
 mod directory;
@@ -45,7 +46,8 @@ Exercise list (in the ascending order):
     - monkey-in-the-middle,
     - hill-climbing,
     - distress-signals,
-    - regolith-reservoir.
+    - regolith-reservoir,
+    - beacon-exclusion-zone.
 
 Part:
     - part_1,
@@ -109,6 +111,7 @@ pub enum Exercise {
     HillClimbing(Part, bool),
     DistressSignals(Part, bool),
     RegolithReservoir(Part, bool),
+    BeaconExclusionZone(Part, bool),
 }
 
 pub enum Part {
@@ -161,6 +164,7 @@ impl TryFrom<&Vec<String>> for Exercise {
             "hill-climbing" => Ok(Exercise::HillClimbing(part, use_example)),
             "distress-signals" => Ok(Exercise::DistressSignals(part, use_example)),
             "regolith-reservoir" => Ok(Exercise::RegolithReservoir(part, use_example)),
+            "beacon-exclusion-zone" => Ok(Exercise::BeaconExclusionZone(part, use_example)),
             other => {
                 return Err(format!(
                     "Unknown exercise chosen, please choose one of the available exercise, got {}",
@@ -366,6 +370,23 @@ impl Exercise {
                     Part::Part2 => regolith_reservoir::find_number_of_resting_units_of_sand_before_blocked(filename)?,
                 };
 
+                println!("Got {}", result)
+            }
+            Exercise::BeaconExclusionZone(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-15-example.txt"
+                } else {
+                    "inputs/input-15.txt"
+                };
+                let row = if *use_example { 10 } else { 2_000_000 };
+                let result = match part {
+                    Part::Part1 => {
+                        beacon_exclusion_zone::find_number_of_covered_positions_in_row(filename, row)?
+                    }
+                    Part::Part2 => {
+                        beacon_exclusion_zone::find_distress_beacon_tuning_frequency(filename)?
+                    }
+                };
                 println!("Got {}", result)
             }
         };
