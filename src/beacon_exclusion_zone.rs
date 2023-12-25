@@ -178,7 +178,7 @@ impl TryFrom<&str> for Sensor {
             r"Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)",
         )?;
         let captures = pattern.captures(value).ok_or(format!("Unable to parse line into sensor, expected line of format `Sensor at x=<value>, y=<value>: closest beacon is at x=<value>, y=<value>`. Got `{}`", value))?;
-        if captures.len() < 4 {
+        if captures.len() < 5 {
             return Err(format!("Unable to parse line into sensor, expected line of format `Sensor at x=<value>, y=<value>: closest beacon is at x=<value>, y=<value>`. Got {}", value).into());
         }
         let sensor_x = captures[1].parse::<isize>().map_err(|e| {

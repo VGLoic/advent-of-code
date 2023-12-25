@@ -8,12 +8,12 @@ mod elf_crates;
 mod hill_climbing;
 mod marker;
 mod monkey_in_the_middle;
+mod proboscidea_volcanium;
 mod regolith_reservoir;
 mod rock_paper_scissors;
 mod rope_bridge;
 mod rucksacks;
 mod tree_house;
-mod proboscidea_volcanium;
 
 pub enum Command {
     Help,
@@ -114,7 +114,7 @@ pub enum Exercise {
     DistressSignals(Part, bool),
     RegolithReservoir(Part, bool),
     BeaconExclusionZone(Part, bool),
-    ProboscideaVolcanium(Part, bool)
+    ProboscideaVolcanium(Part, bool),
 }
 
 pub enum Part {
@@ -392,7 +392,7 @@ impl Exercise {
                     }
                 };
                 println!("Got {}", result)
-            },
+            }
             Exercise::ProboscideaVolcanium(part, use_example) => {
                 let filename = if *use_example {
                     "inputs/input-16-example.txt"
@@ -400,12 +400,8 @@ impl Exercise {
                     "inputs/input-16.txt"
                 };
                 let result = match part {
-                    Part::Part1 => proboscidea_volcanium::find_most_released_pressure(
-                        filename,
-                    )?,
-                    Part::Part2 => {
-                        proboscidea_volcanium::find_most_released_pressure(filename)?
-                    }
+                    Part::Part1 => proboscidea_volcanium::find_most_released_pressure(filename)?,
+                    Part::Part2 => proboscidea_volcanium::find_most_released_pressure(filename)?,
                 };
                 println!("Got {}", result)
             }
