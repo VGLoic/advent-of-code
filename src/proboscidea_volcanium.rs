@@ -8,9 +8,13 @@ use regex::Regex;
 pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(filename)?;
     let mut valves = HashMap::new();
+    let mut worthy_valves_count = 0;
     for line in content.lines() {
         println!("{line}");
         let valve = Valve::try_from(line)?;
+        if valve.rate > 0 {
+            worthy_valves_count += 1;
+        }
         valves.insert(valve.id.clone(), valve);
     }
 
@@ -48,7 +52,9 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
             // At minute 29, we have remaining_minutes = 30 - 29 = 1;
             let remaining_minutes = 30 - minutes;
 
-            if path.can_open_valve(&valves) {
+            let valve_can_be_opened = path.can_open_valve(&valves);
+
+            if valve_can_be_opened {
                 if opening_paths.contains(&path.derive_next_exact_path()) {
                     // println!("Already reached path {:?}. Closing this one.", path.open_valves);
                     paths_to_be_removed.push(*i);
@@ -73,14 +79,19 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
                 }
             }
 
-            let other_possibilites = path.next_valves_possibilites(&valves);
-            for next_valve_id in other_possibilites {
-                let mut new_path = path.clone();
-                new_path.move_to_new_valve(&next_valve_id);
-                paths_to_be_added.push(new_path);
-            }
+            let is_opening_last_valve = valve_can_be_opened && path.open_valves.len() == worthy_valves_count - 1;
+            let has_open_all_valves = path.open_valves.len() == worthy_valves_count;
+            if !valve_can_be_opened || !is_opening_last_valve || !has_open_all_valves {
+                let other_possibilites = path.next_valves_possibilites(&valves);
+                for next_valve_id in other_possibilites {
+                    let mut new_path = path.clone();
+                    new_path.move_to_new_valve(&next_valve_id);
+                    paths_to_be_added.push(new_path);
+                }
+            } 
 
-            if path.can_open_valve(&valves) {
+
+            if valve_can_be_opened {
                 // println!("[Path {i}] - Open valve {}
                 // Exact path {}
                 // Ordered path {}", path.current_valve_id, path.opening_path, path.ordered_opening_path);
@@ -224,12 +235,12 @@ impl VolcanoPath {
         visited_valves_since_last_open.insert(self.current_valve_id.clone());
         self.visited_valves_since_last_open = visited_valves_since_last_open;
 
-        // let non_open_valves = valves.iter().filter(|(v_id, v)| {
-        //     !self.open_valves.contains(*v_id) && v.rate > 0
-        // }).count();
-        // if non_open_valves == 0 {
-        //     println!("REMAINING valves to open #{}", non_open_valves);
-        // }
+        let non_open_valves = valves.iter().filter(|(v_id, v)| {
+            !self.open_valves.contains(*v_id) && v.rate > 0
+        }).count();
+        if non_open_valves == 0 {
+            println!("OPEN ALL THE VALVES!");
+        }
     }
 
     fn stop(&mut self, remaining_minutes: usize) {
