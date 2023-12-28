@@ -22,62 +22,55 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
     let mut paths = HashMap::new();
     paths.insert(path_index, VolcanoPath::new(starting_valve_id));
 
-    // Opening Path -> released_pressure
-    let mut opening_records: HashMap<String, usize> = HashMap::new();
+    // Exact opening path
+    let mut opening_paths: HashSet<String> = HashSet::new();
+    // Ordered opening Path (sorted version of exact opening path + _<current valve id>) -> (released_pressure until end given the opened valves, path index)
+    let mut opening_records: HashMap<String, (usize, usize)> = HashMap::new();
 
     let mut maximum_released_pressure = 0;
-    // Does not work
-    // let mut maximum_potential_released_pressure = 0;
+
+    let mut iteration = 0;
+    let mut iteration_per_minutes = 0;
 
     while minutes <= 30 {
         println!("#### MINUTE {minutes} ####");
-        // println!("Maximum released pressure {maximum_released_pressure}");
 
         let mut paths_to_be_added = vec![];
         let mut paths_to_be_removed = vec![];
 
         for (i, path) in &mut paths {
+            iteration_per_minutes += 1;
             path.accumulate_released_pressure();
 
-            let remaining_minutes = if minutes + 1 > 30 {
-                0
-            } else {
-                30 - minutes - 1
-            };
+            // Does take into account this turn
+            // We start minutes at 1, so initially we are at remaining_minutes =  30 - 1 = 29;
+            // At minute 15, we have remaining_minutes = 30 - 15 = 15;
+            // At minute 29, we have remaining_minutes = 30 - 29 = 1;
+            let remaining_minutes = 30 - minutes;
 
             if path.can_open_valve(&valves) {
-                let key = path.derive_next_key();
-                let record = opening_records.get(&key);
-                if let Some(x) = record {
-                    if *x > path.released_pressure {
-                        // println!("Better path already open in a previous iteration {i}. Key: ${key}");
-                        path.stop(remaining_minutes);
+                if opening_paths.contains(&path.derive_next_exact_path()) {
+                    // println!("Already reached path {:?}. Closing this one.", path.open_valves);
+                    paths_to_be_removed.push(*i);
+                    continue;
+                }
+                let ordered_path = path.derive_next_ordered_path();
+                let record = opening_records.get(&ordered_path);
+                if let Some(existing_record) = record {
+                    let released_pressure_until_end = path.released_pressure
+                        + (path.released_pressure_rate
+                            + valves.get(&path.current_valve_id).unwrap().rate)
+                            * remaining_minutes;
+                    if released_pressure_until_end <= existing_record.0 {
+                        // println!("Equal or better path already open in a previous iteration {i}. Path: {:?}", ordered_path);
                         paths_to_be_removed.push(*i);
                         continue;
+                    } else {
+                        // println!("Path {ordered_path} is updated with stronger value. Previous record is removed");
+                        paths_to_be_removed.push(existing_record.1);
+                        opening_records.insert(ordered_path, (released_pressure_until_end, *i));
                     }
                 }
-            }
-
-            // Does not work
-            // let valve_max_potential_released_pressure = path.derive_maximum_potential_released_pressure(&valves, remaining_minutes + 1);
-            // if valve_max_potential_released_pressure < maximum_potential_released_pressure {
-            //     println!("Path {i} is not strong enough");
-            //     path.stop(remaining_minutes);
-            //     paths_to_be_removed.push(*i);
-
-            //     continue;
-            // } else {
-            //     maximum_potential_released_pressure = valve_max_potential_released_pressure;
-            // }
-
-            if path.derive_maximum_potential_released_pressure(&valves, remaining_minutes + 1)
-                < maximum_released_pressure
-            {
-                // println!("Path {i} is not strong enough");
-                path.stop(remaining_minutes);
-                paths_to_be_removed.push(*i);
-
-                continue;
             }
 
             let other_possibilites = path.next_valves_possibilites(&valves);
@@ -88,9 +81,17 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
             }
 
             if path.can_open_valve(&valves) {
-                // println!("[Path {i}] - Open valve {}", path.current_valve_id);
+                // println!("[Path {i}] - Open valve {}
+                // Exact path {}
+                // Ordered path {}", path.current_valve_id, path.opening_path, path.ordered_opening_path);
                 path.open_valve(&valves);
-                opening_records.insert(path.derive_key(), path.released_pressure);
+                opening_paths.insert(path.opening_path.clone());
+                let released_pressure_until_end =
+                    path.released_pressure + path.released_pressure_rate * remaining_minutes;
+                opening_records.insert(
+                    path.ordered_opening_path.clone(),
+                    (released_pressure_until_end, *i),
+                );
             } else {
                 // println!("No choice for path: {i}");
                 path.stop(remaining_minutes);
@@ -113,7 +114,10 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
             paths.insert(path_index, path_to_be_added);
         }
 
+        println!("Iteration in the minute {iteration_per_minutes}");
         println!("\n");
+        iteration += iteration_per_minutes;
+        iteration_per_minutes = 0;
         minutes += 1;
     }
 
@@ -123,6 +127,8 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
             maximum_released_pressure = p.released_pressure;
         }
     }
+
+    println!("Iteration: {iteration}");
 
     Ok(maximum_released_pressure)
 }
@@ -135,6 +141,8 @@ struct VolcanoPath {
     released_pressure_rate: usize,
     released_pressure: usize,
     stopped: bool,
+    opening_path: String,
+    ordered_opening_path: String,
 }
 
 impl VolcanoPath {
@@ -146,78 +154,34 @@ impl VolcanoPath {
             released_pressure_rate: 0,
             released_pressure: 0,
             stopped: false,
+            opening_path: "".to_owned(),
+            ordered_opening_path: "".to_owned(),
         }
     }
-
-    fn derive_key(&self) -> String {
-        let mut opened_valves = self
-            .open_valves
-            .iter()
-            .map(|s| s.as_str())
-            .collect::<Vec<&str>>();
-        opened_valves.sort();
-        return opened_valves.join(" ");
-    }
-    fn derive_next_key(&self) -> String {
-        let mut opened_valves = self
-            .open_valves
-            .iter()
-            .map(|s| s.as_str())
-            .collect::<Vec<&str>>();
-        opened_valves.push(&self.current_valve_id);
-        opened_valves.sort();
-        return opened_valves.join(" ");
+    fn derive_next_exact_path(&self) -> String {
+        if self.opening_path.len() == 0 {
+            return self.current_valve_id.clone();
+        }
+        self.opening_path.clone() + "-" + self.current_valve_id.as_str()
     }
 
-    fn derive_maximum_potential_released_pressure(
-        &self,
-        valves: &HashMap<String, Valve>,
-        remaining_minutes: usize,
-    ) -> usize {
-        if self.stopped {
-            return self.released_pressure;
+    fn derive_next_ordered_path(&self) -> String {
+        if self.opening_path.len() == 0 {
+            return self.current_valve_id.clone();
         }
+        let a = self.opening_path.clone() + "-" + self.current_valve_id.as_str();
+        let mut b = a.split("-").collect::<Vec<&str>>();
+        b.sort_unstable();
+        b.join("-") + "_" + self.current_valve_id.as_str()
+    }
 
-        let mut non_open_valves_rates = valves
-            .iter()
-            .filter_map(|(v_id, v)| {
-                if self.open_valves.contains(v_id) || v.rate == 0 {
-                    None
-                } else {
-                    Some(v.rate)
-                }
-            })
-            .collect::<Vec<usize>>();
-
-        non_open_valves_rates.sort_unstable();
-
-        let mut maximum_potential =
-            self.released_pressure + self.released_pressure_rate * remaining_minutes;
-        let mut non_open_release_pressure_rate = 0;
-
-        let mut iter_remaining_minutes = remaining_minutes;
-
-        if non_open_valves_rates.len() > 0 {
-            let mut i = non_open_valves_rates.len() - 1;
-
-            loop {
-                non_open_release_pressure_rate += non_open_valves_rates[i];
-                maximum_potential += non_open_release_pressure_rate * 2;
-                iter_remaining_minutes = if iter_remaining_minutes > 2 {
-                    iter_remaining_minutes - 2
-                } else {
-                    0
-                };
-                if i == 0 {
-                    break;
-                }
-                i -= 1;
-            }
-
-            maximum_potential += non_open_release_pressure_rate * iter_remaining_minutes;
+    fn derive_ordered_path(&self) -> String {
+        if self.opening_path.len() == 0 {
+            return self.opening_path.clone();
         }
-
-        maximum_potential
+        let mut b = self.opening_path.split("-").collect::<Vec<&str>>();
+        b.sort_unstable();
+        b.join("-") + "_" + self.current_valve_id.as_str()
     }
 
     fn accumulate_released_pressure(&mut self) {
@@ -253,6 +217,8 @@ impl VolcanoPath {
     fn open_valve(&mut self, valves: &HashMap<String, Valve>) {
         let rate = valves.get(&self.current_valve_id).unwrap().rate;
         self.open_valves.insert(self.current_valve_id.clone());
+        self.opening_path = self.derive_next_exact_path();
+        self.ordered_opening_path = self.derive_ordered_path();
         self.released_pressure_rate += rate;
         let mut visited_valves_since_last_open = HashSet::new();
         visited_valves_since_last_open.insert(self.current_valve_id.clone());
