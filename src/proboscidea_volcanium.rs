@@ -68,7 +68,7 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
                             + valves.get(&path.current_valve_id).unwrap().rate)
                             * remaining_minutes;
                     if released_pressure_until_end <= existing_record.0 {
-                        // println!("Equal or better path already open in a previous iteration {i}. Path: {:?}", ordered_path);
+                        println!("Equal or better path already open in a previous iteration {i}. Released pressure: {} Path: {}", existing_record.0, ordered_path);
                         paths_to_be_removed.push(*i);
                         continue;
                     } else {
@@ -79,7 +79,8 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
                 }
             }
 
-            let is_opening_last_valve = valve_can_be_opened && path.open_valves.len() == worthy_valves_count - 1;
+            let is_opening_last_valve =
+                valve_can_be_opened && path.open_valves.len() == worthy_valves_count - 1;
             let has_open_all_valves = path.open_valves.len() == worthy_valves_count;
             if !valve_can_be_opened || !is_opening_last_valve || !has_open_all_valves {
                 let other_possibilites = path.next_valves_possibilites(&valves);
@@ -88,8 +89,7 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
                     new_path.move_to_new_valve(&next_valve_id);
                     paths_to_be_added.push(new_path);
                 }
-            } 
-
+            }
 
             if valve_can_be_opened {
                 // println!("[Path {i}] - Open valve {}
@@ -235,9 +235,10 @@ impl VolcanoPath {
         visited_valves_since_last_open.insert(self.current_valve_id.clone());
         self.visited_valves_since_last_open = visited_valves_since_last_open;
 
-        let non_open_valves = valves.iter().filter(|(v_id, v)| {
-            !self.open_valves.contains(*v_id) && v.rate > 0
-        }).count();
+        let non_open_valves = valves
+            .iter()
+            .filter(|(v_id, v)| !self.open_valves.contains(*v_id) && v.rate > 0)
+            .count();
         if non_open_valves == 0 {
             println!("OPEN ALL THE VALVES!");
         }
