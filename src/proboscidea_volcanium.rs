@@ -52,23 +52,23 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
             // At minute 29, we have remaining_minutes = 30 - 29 = 1;
             let remaining_minutes = 30 - minutes;
 
-            let valve_can_be_opened = path.can_open_valve(&valves);
+            let valve_can_be_opened = path.can_open_valve_as_actor(&valves);
 
             if valve_can_be_opened {
-                if opening_paths.contains(&path.derive_next_exact_path()) {
+                if opening_paths.contains(&path.actor.derive_next_exact_path()) {
                     // println!("Already reached path {:?}. Closing this one.", path.open_valves);
                     paths_to_be_removed.push(*i);
                     continue;
                 }
-                let ordered_path = path.derive_next_ordered_path();
+                let ordered_path = path.actor.derive_next_ordered_path();
                 let record = opening_records.get(&ordered_path);
                 if let Some(existing_record) = record {
                     let released_pressure_until_end = path.released_pressure
                         + (path.released_pressure_rate
-                            + valves.get(&path.current_valve_id).unwrap().rate)
+                            + valves.get(&path.actor.current_valve_id).unwrap().rate)
                             * remaining_minutes;
                     if released_pressure_until_end <= existing_record.0 {
-                        println!("Equal or better path already open in a previous iteration {i}. Released pressure: {} Path: {}", existing_record.0, ordered_path);
+                        // println!("Equal or better path already open in a previous iteration {i}. Released pressure: {} Path: {}", existing_record.0, ordered_path);
                         paths_to_be_removed.push(*i);
                         continue;
                     } else {
@@ -83,10 +83,10 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
                 valve_can_be_opened && path.open_valves.len() == worthy_valves_count - 1;
             let has_open_all_valves = path.open_valves.len() == worthy_valves_count;
             if !valve_can_be_opened || !is_opening_last_valve || !has_open_all_valves {
-                let other_possibilites = path.next_valves_possibilites(&valves);
+                let other_possibilites = path.actor.next_valves_possibilites(&valves);
                 for next_valve_id in other_possibilites {
                     let mut new_path = path.clone();
-                    new_path.move_to_new_valve(&next_valve_id);
+                    new_path.actor.move_to_new_valve(&next_valve_id);
                     paths_to_be_added.push(new_path);
                 }
             }
@@ -95,12 +95,12 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
                 // println!("[Path {i}] - Open valve {}
                 // Exact path {}
                 // Ordered path {}", path.current_valve_id, path.opening_path, path.ordered_opening_path);
-                path.open_valve(&valves);
-                opening_paths.insert(path.opening_path.clone());
+                path.open_valve_as_actor(&valves);
+                opening_paths.insert(path.actor.opening_path.clone());
                 let released_pressure_until_end =
                     path.released_pressure + path.released_pressure_rate * remaining_minutes;
                 opening_records.insert(
-                    path.ordered_opening_path.clone(),
+                    path.actor.ordered_opening_path.clone(),
                     (released_pressure_until_end, *i),
                 );
             } else {
@@ -146,29 +146,26 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
 
 #[derive(Clone)]
 struct VolcanoPath {
-    visited_valves_since_last_open: HashSet<String>,
+    // visited_valves_since_last_open: HashSet<String>,
     open_valves: HashSet<String>,
-    current_valve_id: String,
+    // current_valve_id: String,
     released_pressure_rate: usize,
     released_pressure: usize,
     stopped: bool,
+    // opening_path: String,
+    // ordered_opening_path: String,
+    actor: ActorPath,
+}
+
+#[derive(Clone)]
+struct ActorPath {
+    visited_valves_since_last_open: HashSet<String>,
+    current_valve_id: String,
     opening_path: String,
     ordered_opening_path: String,
 }
 
-impl VolcanoPath {
-    fn new(starting_id: &str) -> Self {
-        VolcanoPath {
-            visited_valves_since_last_open: HashSet::new(),
-            open_valves: HashSet::new(),
-            current_valve_id: starting_id.to_owned(),
-            released_pressure_rate: 0,
-            released_pressure: 0,
-            stopped: false,
-            opening_path: "".to_owned(),
-            ordered_opening_path: "".to_owned(),
-        }
-    }
+impl ActorPath {
     fn derive_next_exact_path(&self) -> String {
         if self.opening_path.len() == 0 {
             return self.current_valve_id.clone();
@@ -195,15 +192,6 @@ impl VolcanoPath {
         b.join("-") + "_" + self.current_valve_id.as_str()
     }
 
-    fn accumulate_released_pressure(&mut self) {
-        self.released_pressure += self.released_pressure_rate;
-    }
-
-    fn can_open_valve(&self, valves: &HashMap<String, Valve>) -> bool {
-        let valve = valves.get(&self.current_valve_id).unwrap();
-        valve.rate > 0 && !self.open_valves.contains(&self.current_valve_id)
-    }
-
     fn next_valves_possibilites(&self, valves: &HashMap<String, Valve>) -> Vec<String> {
         let valve = valves.get(&self.current_valve_id).unwrap();
         valve
@@ -224,16 +212,117 @@ impl VolcanoPath {
             .insert(new_valve_id.to_owned());
         self.current_valve_id = new_valve_id.to_owned();
     }
+}
 
-    fn open_valve(&mut self, valves: &HashMap<String, Valve>) {
-        let rate = valves.get(&self.current_valve_id).unwrap().rate;
-        self.open_valves.insert(self.current_valve_id.clone());
-        self.opening_path = self.derive_next_exact_path();
-        self.ordered_opening_path = self.derive_ordered_path();
+impl VolcanoPath {
+    fn new(starting_id: &str) -> Self {
+        VolcanoPath {
+            // visited_valves_since_last_open: HashSet::new(),
+            open_valves: HashSet::new(),
+            // current_valve_id: starting_id.to_owned(),
+            released_pressure_rate: 0,
+            released_pressure: 0,
+            stopped: false,
+            // opening_path: "".to_owned(),
+            // ordered_opening_path: "".to_owned(),
+            actor: ActorPath {
+                visited_valves_since_last_open: HashSet::new(),
+                opening_path: "".to_owned(),
+                ordered_opening_path: "".to_owned(),
+                current_valve_id: starting_id.to_owned(),
+            },
+        }
+    }
+    // fn derive_next_exact_path(&self) -> String {
+    //     if self.opening_path.len() == 0 {
+    //         return self.current_valve_id.clone();
+    //     }
+    //     self.opening_path.clone() + "-" + self.current_valve_id.as_str()
+    // }
+
+    // fn derive_next_ordered_path(&self) -> String {
+    //     if self.opening_path.len() == 0 {
+    //         return self.current_valve_id.clone();
+    //     }
+    //     let a = self.opening_path.clone() + "-" + self.current_valve_id.as_str();
+    //     let mut b = a.split("-").collect::<Vec<&str>>();
+    //     b.sort_unstable();
+    //     b.join("-") + "_" + self.current_valve_id.as_str()
+    // }
+
+    // fn derive_ordered_path(&self) -> String {
+    //     if self.opening_path.len() == 0 {
+    //         return self.opening_path.clone();
+    //     }
+    //     let mut b = self.opening_path.split("-").collect::<Vec<&str>>();
+    //     b.sort_unstable();
+    //     b.join("-") + "_" + self.current_valve_id.as_str()
+    // }
+
+    fn accumulate_released_pressure(&mut self) {
+        self.released_pressure += self.released_pressure_rate;
+    }
+
+    fn can_open_valve_as_actor(&self, valves: &HashMap<String, Valve>) -> bool {
+        let valve = valves.get(&self.actor.current_valve_id).unwrap();
+        valve.rate > 0 && !self.open_valves.contains(&self.actor.current_valve_id)
+    }
+
+    // fn next_valves_possibilites(&self, valves: &HashMap<String, Valve>) -> Vec<String> {
+    //     let valve = valves.get(&self.current_valve_id).unwrap();
+    //     valve
+    //         .connected_valves
+    //         .iter()
+    //         .filter_map(|id| {
+    //             if self.visited_valves_since_last_open.contains(id) {
+    //                 None
+    //             } else {
+    //                 Some(id.clone())
+    //             }
+    //         })
+    //         .collect()
+    // }
+
+    // fn move_to_new_valve(&mut self, new_valve_id: &str) {
+    //     self.visited_valves_since_last_open
+    //         .insert(new_valve_id.to_owned());
+    //     self.current_valve_id = new_valve_id.to_owned();
+    // }
+
+    // fn open_valve(&mut self, valves: &HashMap<String, Valve>) {
+    //     let rate = valves.get(&self.current_valve_id).unwrap().rate;
+    //     self.open_valves.insert(self.current_valve_id.clone());
+    //     self.opening_path = self.derive_next_exact_path();
+    //     self.ordered_opening_path = self.derive_ordered_path();
+    //     self.released_pressure_rate += rate;
+    //     let mut visited_valves_since_last_open = HashSet::new();
+    //     visited_valves_since_last_open.insert(self.current_valve_id.clone());
+    //     self.visited_valves_since_last_open = visited_valves_since_last_open;
+
+    //     let non_open_valves = valves
+    //         .iter()
+    //         .filter(|(v_id, v)| !self.open_valves.contains(*v_id) && v.rate > 0)
+    //         .count();
+    //     if non_open_valves == 0 {
+    //         println!("OPEN ALL THE VALVES!");
+    //     }
+    // }
+
+    fn open_valve_as_actor(&mut self, valves: &HashMap<String, Valve>) {
+        let rate = valves.get(&self.actor.current_valve_id).unwrap().rate;
+        self.open_valves.insert(self.actor.current_valve_id.clone());
         self.released_pressure_rate += rate;
+        // self.opening_path = self.derive_next_exact_path();
+        // self.ordered_opening_path = self.derive_ordered_path();
+        // let mut visited_valves_since_last_open = HashSet::new();
+        // visited_valves_since_last_open.insert(self.current_valve_id.clone());
+        // self.visited_valves_since_last_open = visited_valves_since_last_open;
+        // Actor specific
+        self.actor.opening_path = self.actor.derive_next_exact_path();
+        self.actor.ordered_opening_path = self.actor.derive_ordered_path();
         let mut visited_valves_since_last_open = HashSet::new();
-        visited_valves_since_last_open.insert(self.current_valve_id.clone());
-        self.visited_valves_since_last_open = visited_valves_since_last_open;
+        visited_valves_since_last_open.insert(self.actor.current_valve_id.clone());
+        self.actor.visited_valves_since_last_open = visited_valves_since_last_open;
 
         let non_open_valves = valves
             .iter()
