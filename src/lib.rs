@@ -400,8 +400,12 @@ impl Exercise {
                     "inputs/input-16.txt"
                 };
                 let result = match part {
-                    Part::Part1 => proboscidea_volcanium::find_most_released_pressure(filename)?,
-                    Part::Part2 => proboscidea_volcanium::find_most_released_pressure(filename)?,
+                    Part::Part1 => {
+                        proboscidea_volcanium::find_most_released_pressure(filename, 30)?
+                    }
+                    Part::Part2 => {
+                        proboscidea_volcanium::find_most_released_pressure(filename, 26)?
+                    }
                 };
                 println!("Got {}", result)
             }

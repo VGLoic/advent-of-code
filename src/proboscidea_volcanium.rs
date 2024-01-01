@@ -5,7 +5,10 @@ use std::{
 
 use regex::Regex;
 
-pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std::error::Error>> {
+pub fn find_most_released_pressure(
+    filename: &str,
+    available_minutes: usize,
+) -> Result<usize, Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(filename)?;
     let mut valves = HashMap::new();
     let mut worthy_valves_count = 0;
@@ -36,7 +39,7 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
     let mut iteration = 0;
     let mut iteration_per_minutes = 0;
 
-    while minutes <= 30 {
+    while minutes <= available_minutes {
         println!("#### MINUTE {minutes} ####");
 
         let mut paths_to_be_added = vec![];
@@ -50,7 +53,7 @@ pub fn find_most_released_pressure(filename: &str) -> Result<usize, Box<dyn std:
             // We start minutes at 1, so initially we are at remaining_minutes =  30 - 1 = 29;
             // At minute 15, we have remaining_minutes = 30 - 15 = 15;
             // At minute 29, we have remaining_minutes = 30 - 29 = 1;
-            let remaining_minutes = 30 - minutes;
+            let remaining_minutes = available_minutes - minutes;
 
             let valve_can_be_opened = path.can_open_valve_as_actor(&valves);
 
@@ -351,7 +354,7 @@ mod tests {
     #[test]
     fn example_part_1_should_give_expected_result() {
         assert_eq!(
-            find_most_released_pressure("inputs/input-16-example.txt").unwrap(),
+            find_most_released_pressure("inputs/input-16-example.txt", 30).unwrap(),
             1651
         );
     }
@@ -359,7 +362,7 @@ mod tests {
     #[test]
     fn part_1_should_give_expected_result() {
         assert_eq!(
-            find_most_released_pressure("inputs/input-16.txt").unwrap(),
+            find_most_released_pressure("inputs/input-16.txt", 30).unwrap(),
             2181
         );
     }
