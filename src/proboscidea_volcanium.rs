@@ -8,18 +8,23 @@ use regex::Regex;
 pub fn find_most_released_pressure(
     filename: &str,
     available_minutes: usize,
+    number_of_actors: usize,
 ) -> Result<usize, Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(filename)?;
     let mut valves = HashMap::new();
     let mut worthy_valves_count = 0;
+    let mut max_release_pressure_rate = 0;
     for line in content.lines() {
         println!("{line}");
         let valve = Valve::try_from(line)?;
         if valve.rate > 0 {
             worthy_valves_count += 1;
+            max_release_pressure_rate += valve.rate;
         }
         valves.insert(valve.id.clone(), valve);
     }
+
+    println!("Max release pressure rate: {max_release_pressure_rate}");
 
     let mut minutes = 1;
 
@@ -27,12 +32,17 @@ pub fn find_most_released_pressure(
 
     let mut path_index = 0;
     let mut paths = HashMap::new();
-    paths.insert(path_index, VolcanoPath::new(starting_valve_id));
+    paths.insert(
+        path_index,
+        VolcanoPath::new(starting_valve_id, number_of_actors),
+    );
 
-    // Exact opening path
+    // Opening path + positions at opening time
     let mut opening_paths: HashSet<String> = HashSet::new();
-    // Ordered opening Path (sorted version of exact opening path + _<current valve id>) -> released_pressure until end given the opened valves
+    // Ordered opening Path (sorted version of exact opening path + |<path addendum>) -> released_pressure until end given the opened valves
     let mut opening_records: HashMap<String, usize> = HashMap::new();
+
+    let mut non_open_valves_rates_cache: HashMap<String, Vec<usize>> = HashMap::new();
 
     let mut maximum_released_pressure = 0;
 
@@ -41,9 +51,12 @@ pub fn find_most_released_pressure(
 
     while minutes <= available_minutes {
         println!("#### MINUTE {minutes} ####");
+        println!("Number of paths {}", paths.len());
 
         let mut paths_to_be_added = vec![];
         let mut paths_to_be_removed = vec![];
+
+        let mut removed_paths = 0;
 
         for (i, path) in &mut paths {
             iteration_per_minutes += 1;
@@ -55,96 +68,183 @@ pub fn find_most_released_pressure(
             // At minute 29, we have remaining_minutes = 30 - 29 = 1;
             let remaining_minutes = available_minutes - minutes;
 
-            let valve_can_be_opened = path.can_open_valve_as_actor(&valves);
-
-            let mut derived_paths = vec![];
+            let mut next_actor_paths = vec![path.clone()];
 
             // The existing path is removed in any case
             paths_to_be_removed.push(*i);
 
-            // If we can't open the valve, we create the new paths based on the moving possibilities
-            if !valve_can_be_opened {
-                derived_paths = path
-                    .actor
-                    .next_valves_possibilites(&valves)
-                    .iter()
-                    .map(|next_valve_id| {
-                        let mut new_path = path.clone();
-                        new_path.actor.move_to_new_valve(&next_valve_id);
-                        new_path
-                    })
-                    .collect();
-            } else {
-                // If we can open the valve,
-                // We first check that there are no already better path:
-                //  1. This exact opening path has already been made in a previous iteration, in this case, this path can not be better
-                //  2. If there is an existing opening record, we compare the released pressure until the end. If it is less than the existing record, this path can not be better
-                // We check if we are opening the last one, if yes, then we don't create new possibilities
-                // Else, we create one possibility for the path opening the current valve
-                // And we create the other possibilities by moving
-
-                if opening_paths.contains(&path.derive_next_exact_path()) {
-                    // println!("Already reached path {:?} in a previous iteration with another path. Closing this one.", path.opening_path);
-                    continue;
-                }
-
-                let ordered_path = path.derive_next_ordered_path();
-                if let Some(existing_record) = opening_records.get(&ordered_path) {
-                    let released_pressure_until_end = path.released_pressure
-                        + (path.released_pressure_rate
-                            + valves.get(&path.actor.current_valve_id).unwrap().rate)
-                            * remaining_minutes;
-                    if released_pressure_until_end <= *existing_record {
-                        // println!("Equal or better path already open in a previous iteration {i}. Released pressure: {} Path: {}", existing_record.0, ordered_path);
-                        continue;
+            if maximum_released_pressure > 0 && remaining_minutes < available_minutes / 2 {
+                let non_open_valves = non_open_valves_rates_cache.get(&path.opening_path);
+                let mut ordered_non_open_valves_rates: Vec<usize> = vec![];
+                match non_open_valves {
+                    None => {
+                        let mut non_open_valves_rates = vec![];
+                        for id in valves.keys() {
+                            if !path.opening_path.contains(id) {
+                                non_open_valves_rates.push(valves.get(id).unwrap().rate);
+                            }
+                        }
+                        non_open_valves_rates.sort_unstable();
+                        for i in (0..non_open_valves_rates.len()).rev() {
+                            ordered_non_open_valves_rates.push(non_open_valves_rates[i]);
+                        }
+                        non_open_valves_rates_cache.insert(
+                            path.opening_path.clone(),
+                            ordered_non_open_valves_rates.clone(),
+                        );
+                    }
+                    Some(cached_value) => {
+                        ordered_non_open_valves_rates = cached_value.clone();
+                    }
+                };
+                let mut perfect_released_pressure =
+                    path.released_pressure + path.released_pressure_rate * remaining_minutes;
+                for i in 0..ordered_non_open_valves_rates.len() {
+                    let minutes_to_open_valve = i / number_of_actors * 2;
+                    let active_minutes = if remaining_minutes > minutes_to_open_valve {
+                        remaining_minutes - minutes_to_open_valve
                     } else {
-                        // println!("Path {ordered_path} is updated with stronger value. Previous record is removed");
-                        // Remind me: we should have a way to remove all the paths generated by the previous record
-                        opening_records.insert(ordered_path, released_pressure_until_end);
-                    }
+                        0
+                    };
+                    perfect_released_pressure += active_minutes * ordered_non_open_valves_rates[i];
                 }
-
-                let is_opening_last_valve = path.open_valves_count() == worthy_valves_count - 1;
-                if is_opening_last_valve {
-                    path.open_valve_as_actor(&valves);
-                    path.stop(remaining_minutes);
-                    opening_paths.insert(path.opening_path.clone());
-                    opening_records
-                        .insert(path.ordered_opening_path.clone(), path.released_pressure);
-                    println!("Path {i} - All valves open");
-                    if path.released_pressure > maximum_released_pressure {
-                        // println!("Path {i} - Found new maximum at: {}", path.released_pressure);
-                        maximum_released_pressure = path.released_pressure;
-                    }
+                if perfect_released_pressure < maximum_released_pressure {
+                    // println!("Killing a not good enough path");
+                    removed_paths += 1;
                     continue;
+                } else {
+                    // println!("Diff is {}, perfect released pressure {}", perfect_released_pressure - maximum_released_pressure, perfect_released_pressure);
                 }
+            }
 
-                path.actor
-                    .next_valves_possibilites(&valves)
-                    .iter()
-                    .map(|next_valve_id| {
-                        let mut new_path = path.clone();
-                        new_path.actor.move_to_new_valve(&next_valve_id);
-                        new_path
-                    })
-                    .for_each(|p| {
-                        derived_paths.push(p);
-                    });
+            for actor_index in 0..number_of_actors {
+                let mut actor_paths = next_actor_paths;
+                next_actor_paths = vec![];
 
-                let mut opening_valve_possibility = path.clone();
-                opening_valve_possibility.open_valve_as_actor(&valves);
-                opening_paths.insert(opening_valve_possibility.opening_path.clone());
-                let released_pressure_until_end = opening_valve_possibility.released_pressure
-                    + opening_valve_possibility.released_pressure_rate * remaining_minutes;
-                opening_records.insert(
-                    opening_valve_possibility.ordered_opening_path.clone(),
-                    released_pressure_until_end,
-                );
-                derived_paths.push(opening_valve_possibility);
+                // println!("[Path {i}] - [Actor {actor_index}] - Operate on #{} paths", actor_paths.len());
+
+                for actor_path in &mut actor_paths {
+                    let valve_can_be_opened = actor_path.can_open_valve(&valves, actor_index);
+
+                    // If we can't open the valve, we create the new paths based on the moving possibilities
+                    if !valve_can_be_opened {
+                        actor_path.actors[actor_index]
+                            .next_valves_possibilites(&valves)
+                            .iter()
+                            .map(|next_valve_id| {
+                                let mut new_path = actor_path.clone();
+                                new_path.move_to_new_valve(actor_index, &next_valve_id);
+                                new_path
+                            })
+                            .for_each(|p| {
+                                next_actor_paths.push(p);
+                            });
+                    } else {
+                        // If we can open the valve,
+                        // We first check that there are no already better path:
+                        //  1. This exact opening path has already been made in a previous iteration, in this case, this path can not be better
+                        //  2. If there is an existing opening record, we compare the released pressure until the end. If it is less than the existing record, this path can not be better
+                        // We check if we are opening the last one, if yes, then we don't create new possibilities
+                        // Else, we create one possibility for the path opening the current valve
+                        // And we create the other possibilities by moving
+
+                        let completed_opening_path = actor_path.derive_next_exact_path(actor_index)
+                            + "|"
+                            + actor_path.actor_positions_addendum().as_str();
+                        if opening_paths.contains(&completed_opening_path) {
+                            // println!("Already reached path {:?} in a previous iteration with another path. Closing this one.", completed_opening_path);
+                            removed_paths += 1;
+                            continue;
+                        }
+
+                        let ordered_path = actor_path.derive_next_ordered_path(actor_index);
+                        if let Some(existing_record) = opening_records.get(&ordered_path) {
+                            let released_pressure_until_end = actor_path.released_pressure
+                                + (actor_path.released_pressure_rate
+                                    + valves
+                                        .get(&actor_path.actors[actor_index].current_valve_id)
+                                        .unwrap()
+                                        .rate)
+                                    * remaining_minutes;
+                            if released_pressure_until_end <= *existing_record {
+                                // println!("Equal or better path already open in a previous iteration {i}. Released pressure: {} Path: {}", existing_record, ordered_path);
+                                removed_paths += 1;
+                                continue;
+                            } else {
+                                // println!("Path {ordered_path} is updated with stronger value. Previous record is removed");
+                                // Remind me: we should have a way to remove all the paths generated by the previous record
+                                opening_records.insert(ordered_path, released_pressure_until_end);
+                            }
+                        }
+
+                        let is_opening_last_valve =
+                            actor_path.open_valves_count() == worthy_valves_count - 1;
+                        if is_opening_last_valve {
+                            actor_path.open_valve(&valves, actor_index);
+                            actor_path.stop(remaining_minutes);
+                            opening_paths.insert(
+                                actor_path.opening_path.clone()
+                                    + "|"
+                                    + actor_path.actor_positions_addendum().as_str(),
+                            );
+                            opening_records.insert(
+                                actor_path.ordered_opening_path.clone()
+                                    + "|"
+                                    + actor_path.actor_positions_addendum().as_str(),
+                                actor_path.released_pressure,
+                            );
+                            // println!("Path {i} - Path {} - All valves open with released pressure: {}", actor_path.opening_path, actor_path.released_pressure);
+                            if actor_path.released_pressure > maximum_released_pressure {
+                                println!(
+                                    "Path {i} - Path {} - Found new maximum at: {}. Rate {}",
+                                    actor_path.opening_path,
+                                    actor_path.released_pressure,
+                                    actor_path.released_pressure_rate
+                                );
+                                maximum_released_pressure = actor_path.released_pressure;
+                            }
+                            removed_paths += 1;
+                            continue;
+                        }
+
+                        actor_path.actors[actor_index]
+                            .next_valves_possibilites(&valves)
+                            .iter()
+                            .map(|next_valve_id| {
+                                let mut new_path = actor_path.clone();
+                                new_path.move_to_new_valve(actor_index, &next_valve_id);
+                                new_path
+                            })
+                            .for_each(|p| {
+                                next_actor_paths.push(p);
+                            });
+
+                        let mut opening_valve_possibility = actor_path.clone();
+                        opening_valve_possibility.open_valve(&valves, actor_index);
+                        opening_paths.insert(
+                            opening_valve_possibility.opening_path.clone()
+                                + "|"
+                                + opening_valve_possibility
+                                    .actor_positions_addendum()
+                                    .as_str(),
+                        );
+                        let released_pressure_until_end = opening_valve_possibility
+                            .released_pressure
+                            + opening_valve_possibility.released_pressure_rate * remaining_minutes;
+                        opening_records.insert(
+                            opening_valve_possibility.ordered_opening_path.clone(),
+                            released_pressure_until_end,
+                        );
+                        if released_pressure_until_end > maximum_released_pressure {
+                            maximum_released_pressure = released_pressure_until_end;
+                        }
+                        next_actor_paths.push(opening_valve_possibility);
+                    }
+                }
             }
 
             // The derived are added
-            for p in derived_paths {
+            for p in next_actor_paths {
                 paths_to_be_added.push(p);
             }
         }
@@ -161,6 +261,7 @@ pub fn find_most_released_pressure(
         }
 
         println!("Iteration in the minute {iteration_per_minutes}");
+        println!("Removed paths in the minute {}", removed_paths);
         println!("\n");
         iteration += iteration_per_minutes;
         iteration_per_minutes = 0;
@@ -190,7 +291,7 @@ struct VolcanoPath {
     stopped: bool,
     opening_path: String,
     ordered_opening_path: String,
-    actor: ActorPath,
+    actors: Vec<ActorPath>,
 }
 
 #[derive(Clone)]
@@ -208,49 +309,48 @@ impl ActorPath {
             .filter_map(|id| {
                 if self.visited_valves_since_last_open.contains(id) {
                     None
+                    // Some(id.clone())
                 } else {
                     Some(id.clone())
                 }
             })
             .collect()
     }
-
-    fn move_to_new_valve(&mut self, new_valve_id: &str) {
-        self.visited_valves_since_last_open
-            .insert(new_valve_id.to_owned());
-        self.current_valve_id = new_valve_id.to_owned();
-    }
 }
 
 impl VolcanoPath {
-    fn new(starting_id: &str) -> Self {
+    fn new(starting_id: &str, number_of_actors: usize) -> Self {
         VolcanoPath {
             released_pressure_rate: 0,
             released_pressure: 0,
             stopped: false,
             opening_path: "".to_owned(),
             ordered_opening_path: "".to_owned(),
-            actor: ActorPath {
-                visited_valves_since_last_open: HashSet::new(),
-                current_valve_id: starting_id.to_owned(),
-            },
+            actors: vec![
+                ActorPath {
+                    visited_valves_since_last_open: HashSet::new(),
+                    current_valve_id: starting_id.to_owned(),
+                };
+                number_of_actors
+            ],
         }
     }
-    fn derive_next_exact_path(&self) -> String {
+    fn derive_next_exact_path(&self, actor_index: usize) -> String {
         if self.opening_path.len() == 0 {
-            return self.actor.current_valve_id.clone();
+            return self.actors[actor_index].current_valve_id.clone();
         }
-        self.opening_path.clone() + "-" + self.actor.current_valve_id.as_str()
+        self.opening_path.clone() + "-" + self.actors[actor_index].current_valve_id.as_str()
     }
 
-    fn derive_next_ordered_path(&self) -> String {
+    fn derive_next_ordered_path(&self, actor_index: usize) -> String {
         if self.opening_path.len() == 0 {
-            return self.actor.current_valve_id.clone();
+            return self.actors[actor_index].current_valve_id.clone();
         }
-        let a = self.opening_path.clone() + "-" + self.actor.current_valve_id.as_str();
+        let a =
+            self.opening_path.clone() + "-" + self.actors[actor_index].current_valve_id.as_str();
         let mut b = a.split("-").collect::<Vec<&str>>();
         b.sort_unstable();
-        b.join("-") + "_" + self.actor.current_valve_id.as_str()
+        b.join("-") + "|" + self.actor_positions_addendum().as_str()
     }
 
     fn derive_ordered_path(&self) -> String {
@@ -259,16 +359,36 @@ impl VolcanoPath {
         }
         let mut b = self.opening_path.split("-").collect::<Vec<&str>>();
         b.sort_unstable();
-        b.join("-") + "_" + self.actor.current_valve_id.as_str()
+        b.join("-") + "|" + self.actor_positions_addendum().as_str()
+    }
+
+    fn actor_positions_addendum(&self) -> String {
+        match self.actors.len() {
+            0 => "".to_owned(),
+            1 => self.actors[0].current_valve_id.clone(),
+            _ => {
+                let a = self
+                    .actors
+                    .iter()
+                    .map(|a| a.current_valve_id.clone())
+                    .collect::<Vec<String>>();
+                a.join("_")
+            }
+        }
     }
 
     fn accumulate_released_pressure(&mut self) {
         self.released_pressure += self.released_pressure_rate;
     }
 
-    fn can_open_valve_as_actor(&self, valves: &HashMap<String, Valve>) -> bool {
-        let valve = valves.get(&self.actor.current_valve_id).unwrap();
-        valve.rate > 0 && !self.opening_path.contains(&self.actor.current_valve_id)
+    fn can_open_valve(&self, valves: &HashMap<String, Valve>, actor_index: usize) -> bool {
+        let valve = valves
+            .get(&self.actors[actor_index].current_valve_id)
+            .unwrap();
+        valve.rate > 0
+            && !self
+                .opening_path
+                .contains(&self.actors[actor_index].current_valve_id)
     }
 
     fn open_valves_count(&self) -> usize {
@@ -278,15 +398,25 @@ impl VolcanoPath {
         self.opening_path.split("-").count()
     }
 
-    fn open_valve_as_actor(&mut self, valves: &HashMap<String, Valve>) {
-        let rate = valves.get(&self.actor.current_valve_id).unwrap().rate;
+    fn open_valve(&mut self, valves: &HashMap<String, Valve>, actor_index: usize) {
+        let rate = valves
+            .get(&self.actors[actor_index].current_valve_id)
+            .unwrap()
+            .rate;
         self.released_pressure_rate += rate;
-        self.opening_path = self.derive_next_exact_path();
+        self.opening_path = self.derive_next_exact_path(actor_index);
         self.ordered_opening_path = self.derive_ordered_path();
         // Actor specific
         let mut visited_valves_since_last_open = HashSet::new();
-        visited_valves_since_last_open.insert(self.actor.current_valve_id.clone());
-        self.actor.visited_valves_since_last_open = visited_valves_since_last_open;
+        visited_valves_since_last_open.insert(self.actors[actor_index].current_valve_id.clone());
+        self.actors[actor_index].visited_valves_since_last_open = visited_valves_since_last_open;
+    }
+
+    fn move_to_new_valve(&mut self, actor_index: usize, new_valve_id: &str) {
+        self.actors[actor_index]
+            .visited_valves_since_last_open
+            .insert(new_valve_id.to_owned());
+        self.actors[actor_index].current_valve_id = new_valve_id.to_owned();
     }
 
     fn stop(&mut self, remaining_minutes: usize) {
@@ -354,7 +484,7 @@ mod tests {
     #[test]
     fn example_part_1_should_give_expected_result() {
         assert_eq!(
-            find_most_released_pressure("inputs/input-16-example.txt", 30).unwrap(),
+            find_most_released_pressure("inputs/input-16-example.txt", 30, 1).unwrap(),
             1651
         );
     }
@@ -362,8 +492,24 @@ mod tests {
     #[test]
     fn part_1_should_give_expected_result() {
         assert_eq!(
-            find_most_released_pressure("inputs/input-16.txt", 30).unwrap(),
+            find_most_released_pressure("inputs/input-16.txt", 30, 1).unwrap(),
             2181
+        );
+    }
+
+    #[test]
+    fn example_part_2_should_give_expected_result() {
+        assert_eq!(
+            find_most_released_pressure("inputs/input-16-example.txt", 26, 2).unwrap(),
+            1707
+        );
+    }
+
+    #[test]
+    fn part_2_should_give_expected_result() {
+        assert_eq!(
+            find_most_released_pressure("inputs/input-16.txt", 26, 2).unwrap(),
+            2824
         );
     }
 }

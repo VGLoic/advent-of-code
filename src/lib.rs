@@ -401,10 +401,10 @@ impl Exercise {
                 };
                 let result = match part {
                     Part::Part1 => {
-                        proboscidea_volcanium::find_most_released_pressure(filename, 30)?
+                        proboscidea_volcanium::find_most_released_pressure(filename, 30, 1)?
                     }
                     Part::Part2 => {
-                        proboscidea_volcanium::find_most_released_pressure(filename, 26)?
+                        proboscidea_volcanium::find_most_released_pressure(filename, 26, 2)?
                     }
                 };
                 println!("Got {}", result)
