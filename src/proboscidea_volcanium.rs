@@ -313,7 +313,7 @@ struct VolcanoPath {
 
 #[derive(Clone)]
 struct ActorPath {
-    visited_valves_since_last_open: HashSet<String>,
+    visited_valves_since_last_open: String,
     current_valve_id: String,
 }
 
@@ -344,7 +344,7 @@ impl VolcanoPath {
             ordered_opening_path: "".to_owned(),
             actors: vec![
                 ActorPath {
-                    visited_valves_since_last_open: HashSet::new(),
+                    visited_valves_since_last_open: starting_id.to_owned(),
                     current_valve_id: starting_id.to_owned(),
                 };
                 number_of_actors
@@ -450,15 +450,14 @@ impl VolcanoPath {
         self.opening_path = self.derive_next_exact_path(actor_index);
         self.ordered_opening_path = self.derive_ordered_path();
         // Actor specific
-        let mut visited_valves_since_last_open = HashSet::new();
-        visited_valves_since_last_open.insert(self.actors[actor_index].current_valve_id.clone());
-        self.actors[actor_index].visited_valves_since_last_open = visited_valves_since_last_open;
+        self.actors[actor_index].visited_valves_since_last_open = self.actors[actor_index].current_valve_id.clone();
     }
 
     fn move_to_new_valve(&mut self, actor_index: usize, new_valve_id: &str) {
         self.actors[actor_index]
-            .visited_valves_since_last_open
-            .insert(new_valve_id.to_owned());
+            .visited_valves_since_last_open += "-";
+        self.actors[actor_index]
+            .visited_valves_since_last_open += new_valve_id;
         self.actors[actor_index].current_valve_id = new_valve_id.to_owned();
     }
 
