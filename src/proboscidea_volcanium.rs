@@ -73,7 +73,9 @@ pub fn find_most_released_pressure(
             // The existing path is removed in any case
             paths_to_be_removed.push(*i);
 
-            if maximum_released_pressure > 0 && remaining_minutes < available_minutes / 2 {
+            // Choice of 10 is mostly based on experience here
+            // It matches the time at which there are paths with enough open valves to overcome weak ones
+            if maximum_released_pressure > 0 && minutes > 10 {
                 let non_open_valves = non_open_valves_rates_cache.get(&path.opening_path);
                 let mut ordered_non_open_valves_rates: Vec<usize> = vec![];
                 match non_open_valves {
@@ -128,6 +130,7 @@ pub fn find_most_released_pressure(
 
                     // If we can't open the valve, we create the new paths based on the moving possibilities
                     if !valve_can_be_opened {
+                        // REMIND ME: Could filter out loops
                         actor_path.actors[actor_index]
                             .next_valves_possibilites(&valves)
                             .iter()
@@ -148,6 +151,7 @@ pub fn find_most_released_pressure(
                         // Else, we create one possibility for the path opening the current valve
                         // And we create the other possibilities by moving
 
+                        // REMIND ME: Chould take into account permutations
                         let completed_opening_path = actor_path.derive_next_exact_path(actor_index)
                             + "|"
                             + actor_path.actor_positions_addendum().as_str();
@@ -157,6 +161,7 @@ pub fn find_most_released_pressure(
                             continue;
                         }
 
+                        // REMIND ME: Chould take into account permutations
                         let ordered_path = actor_path.derive_next_ordered_path(actor_index);
                         if let Some(existing_record) = opening_records.get(&ordered_path) {
                             let released_pressure_until_end = actor_path.released_pressure
@@ -286,6 +291,7 @@ pub fn find_most_released_pressure(
 
 #[derive(Clone)]
 struct VolcanoPath {
+    history: String,
     released_pressure_rate: usize,
     released_pressure: usize,
     stopped: bool,
@@ -309,7 +315,6 @@ impl ActorPath {
             .filter_map(|id| {
                 if self.visited_valves_since_last_open.contains(id) {
                     None
-                    // Some(id.clone())
                 } else {
                     Some(id.clone())
                 }
@@ -320,7 +325,10 @@ impl ActorPath {
 
 impl VolcanoPath {
     fn new(starting_id: &str, number_of_actors: usize) -> Self {
+        let path_id_components = vec![starting_id; number_of_actors];
+        let history = path_id_components.join("-");
         VolcanoPath {
+            history: history,
             released_pressure_rate: 0,
             released_pressure: 0,
             stopped: false,
@@ -406,6 +414,8 @@ impl VolcanoPath {
         self.released_pressure_rate += rate;
         self.opening_path = self.derive_next_exact_path(actor_index);
         self.ordered_opening_path = self.derive_ordered_path();
+        self.history += "-";
+        self.history += self.actors[actor_index].current_valve_id.as_str();
         // Actor specific
         let mut visited_valves_since_last_open = HashSet::new();
         visited_valves_since_last_open.insert(self.actors[actor_index].current_valve_id.clone());
@@ -417,6 +427,8 @@ impl VolcanoPath {
             .visited_valves_since_last_open
             .insert(new_valve_id.to_owned());
         self.actors[actor_index].current_valve_id = new_valve_id.to_owned();
+        self.history += "-";
+        self.history += new_valve_id;
     }
 
     fn stop(&mut self, remaining_minutes: usize) {
