@@ -8,6 +8,7 @@ mod elf_crates;
 mod hill_climbing;
 mod marker;
 mod monkey_in_the_middle;
+mod proboscidea_volcanium;
 mod regolith_reservoir;
 mod rock_paper_scissors;
 mod rope_bridge;
@@ -47,7 +48,8 @@ Exercise list (in the ascending order):
     - hill-climbing,
     - distress-signals,
     - regolith-reservoir,
-    - beacon-exclusion-zone.
+    - beacon-exclusion-zone,
+    - proboscidea-volcanium.
 
 Part:
     - part_1,
@@ -112,6 +114,7 @@ pub enum Exercise {
     DistressSignals(Part, bool),
     RegolithReservoir(Part, bool),
     BeaconExclusionZone(Part, bool),
+    ProboscideaVolcanium(Part, bool),
 }
 
 pub enum Part {
@@ -165,6 +168,7 @@ impl TryFrom<&Vec<String>> for Exercise {
             "distress-signals" => Ok(Exercise::DistressSignals(part, use_example)),
             "regolith-reservoir" => Ok(Exercise::RegolithReservoir(part, use_example)),
             "beacon-exclusion-zone" => Ok(Exercise::BeaconExclusionZone(part, use_example)),
+            "proboscidea-volcanium" => Ok(Exercise::ProboscideaVolcanium(part, use_example)),
             other => {
                 return Err(format!(
                     "Unknown exercise chosen, please choose one of the available exercise, got {}",
@@ -385,6 +389,22 @@ impl Exercise {
                     )?,
                     Part::Part2 => {
                         beacon_exclusion_zone::find_distress_beacon_tuning_frequency(filename)?
+                    }
+                };
+                println!("Got {}", result)
+            }
+            Exercise::ProboscideaVolcanium(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-16-example.txt"
+                } else {
+                    "inputs/input-16.txt"
+                };
+                let result = match part {
+                    Part::Part1 => {
+                        proboscidea_volcanium::find_most_released_pressure(filename, 30, 1)?
+                    }
+                    Part::Part2 => {
+                        proboscidea_volcanium::find_most_released_pressure(filename, 26, 2)?
                     }
                 };
                 println!("Got {}", result)
