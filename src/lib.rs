@@ -9,6 +9,7 @@ mod hill_climbing;
 mod marker;
 mod monkey_in_the_middle;
 mod proboscidea_volcanium;
+mod pyroclastic_flow;
 mod regolith_reservoir;
 mod rock_paper_scissors;
 mod rope_bridge;
@@ -49,7 +50,8 @@ Exercise list (in the ascending order):
     - distress-signals,
     - regolith-reservoir,
     - beacon-exclusion-zone,
-    - proboscidea-volcanium.
+    - proboscidea-volcanium,
+    - pyroclastic-flow.
 
 Part:
     - part_1,
@@ -115,6 +117,7 @@ pub enum Exercise {
     RegolithReservoir(Part, bool),
     BeaconExclusionZone(Part, bool),
     ProboscideaVolcanium(Part, bool),
+    PyroclasticFlow(Part, bool),
 }
 
 pub enum Part {
@@ -169,6 +172,7 @@ impl TryFrom<&Vec<String>> for Exercise {
             "regolith-reservoir" => Ok(Exercise::RegolithReservoir(part, use_example)),
             "beacon-exclusion-zone" => Ok(Exercise::BeaconExclusionZone(part, use_example)),
             "proboscidea-volcanium" => Ok(Exercise::ProboscideaVolcanium(part, use_example)),
+            "pyroclastic-flow" => Ok(Exercise::PyroclasticFlow(part, use_example)),
             other => {
                 return Err(format!(
                     "Unknown exercise chosen, please choose one of the available exercise, got {}",
@@ -406,6 +410,18 @@ impl Exercise {
                     Part::Part2 => {
                         proboscidea_volcanium::find_most_released_pressure(filename, 26, 2)?
                     }
+                };
+                println!("Got {}", result)
+            }
+            Exercise::PyroclasticFlow(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-17-example.txt"
+                } else {
+                    "inputs/input-17.txt"
+                };
+                let result = match part {
+                    Part::Part1 => pyroclastic_flow::find_tower_height(filename, 2_022)?,
+                    Part::Part2 => pyroclastic_flow::find_tower_height(filename, 1_000_000_000_000)?,
                 };
                 println!("Got {}", result)
             }
