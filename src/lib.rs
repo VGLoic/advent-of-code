@@ -421,7 +421,9 @@ impl Exercise {
                 };
                 let result = match part {
                     Part::Part1 => pyroclastic_flow::find_tower_height(filename, 2_022)?,
-                    Part::Part2 => pyroclastic_flow::find_tower_height(filename, 1_000_000_000_000)?,
+                    Part::Part2 => {
+                        pyroclastic_flow::find_tower_height(filename, 1_000_000_000_000)?
+                    }
                 };
                 println!("Got {}", result)
             }
