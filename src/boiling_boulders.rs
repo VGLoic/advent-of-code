@@ -7,61 +7,53 @@ pub fn derive_surface_area(filename: &str) -> Result<usize, Box<dyn std::error::
 
     for line in content.lines() {
         let p = Position::try_from(line)?;
-        println!("{p}");
         lava_structure.add_droplet(p);
     }
 
-    Ok(lava_structure.surface_area)
+    Ok(lava_structure.max_surface_area)
 }
 
 struct LavaStructure {
-    surface_area: usize,
-    droplet_positions: std::collections::HashSet<Position>
+    max_surface_area: usize,
+    droplet_positions: std::collections::HashSet<Position>,
+    potential_water_positions: std::collections::HashSet<Position>,
 }
 
 impl LavaStructure {
     fn new() -> Self {
         let droplet_positions = std::collections::HashSet::new();
+        let potential_water_positions = std::collections::HashSet::new();
         LavaStructure {
-            surface_area: 0,
-            droplet_positions
+            max_surface_area: 0,
+            droplet_positions,
+            potential_water_positions,
         }
     }
 
     fn add_droplet(&mut self, p: Position) {
-        let surfaces_in_contact = self.count_surfaces_in_contact(&p);
-        self.surface_area += 6;
-        self.surface_area -= 2 * surfaces_in_contact;
+        let new_water_positions = self.potential_water_positions(&p);
+        let surfaces_in_contact = 6 - new_water_positions.len();
+        self.max_surface_area += 6;
+        self.max_surface_area -= 2 * surfaces_in_contact;
         self.droplet_positions.insert(p);
+        for water_p in new_water_positions {
+            self.potential_water_positions.insert(water_p);
+        }
     }
 
-    fn count_surfaces_in_contact(&self, p: &Position) -> usize {
-        let mut count = 0;
-        // Above
-        if self.droplet_positions.contains(&p.above()) {
-            count += 1;
-        }
-        // Under
-        if self.droplet_positions.contains(&p.under()) {
-            count += 1;
-        }
-        // Right
-        if self.droplet_positions.contains(&p.right_side()) {
-            count += 1;
-        }
-        // Left
-        if self.droplet_positions.contains(&p.left_side()) {
-            count += 1;
-        }
-        // In front
-        if self.droplet_positions.contains(&p.in_front()) {
-            count += 1;
-        }
-        // Behind
-        if self.droplet_positions.contains(&p.behind()) {
-            count += 1;
-        }
-        count
+    fn potential_water_positions(&self, p: &Position) -> Vec<Position> {
+        let positions = vec![
+            p.above(),
+            p.under(),
+            p.right_side(),
+            p.left_side(),
+            p.in_front(),
+            p.behind()
+        ];
+
+        positions.into_iter()
+            .filter(|p| !self.droplet_positions.contains(p))
+            .collect()
     }
 }
 
