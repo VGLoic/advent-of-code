@@ -33,3 +33,4 @@ Where `part` is either `part_1` or `part_2` and exercise name is defined as foll
 - Exercise #15: `beacon-exclusion-zone`,
 - Exercise #16: `proboscidea-volcanium`,
 - Exercise #17: `pyroclastic-flow`,
+- Exercise #17: `boiling-boulders`,
