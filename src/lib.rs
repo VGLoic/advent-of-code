@@ -1,5 +1,6 @@
 mod assignment;
 mod beacon_exclusion_zone;
+mod boiling_boulders;
 mod callories;
 mod cathod_ray_tube;
 mod directory;
@@ -15,7 +16,6 @@ mod rock_paper_scissors;
 mod rope_bridge;
 mod rucksacks;
 mod tree_house;
-mod boiling_boulders;
 
 pub enum Command {
     Help,
@@ -438,10 +438,8 @@ impl Exercise {
                     "inputs/input-18.txt"
                 };
                 let result = match part {
-                    Part::Part1 => boiling_boulders::derive_surface_area(filename)?,
-                    Part::Part2 => {
-                        boiling_boulders::derive_surface_area(filename)?
-                    }
+                    Part::Part1 => boiling_boulders::derive_surface_area(filename, false)?,
+                    Part::Part2 => boiling_boulders::derive_surface_area(filename, true)?,
                 };
                 println!("Got {}", result)
             }
