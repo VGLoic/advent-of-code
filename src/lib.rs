@@ -16,6 +16,7 @@ mod rock_paper_scissors;
 mod rope_bridge;
 mod rucksacks;
 mod tree_house;
+mod not_enough_minerals;
 
 pub enum Command {
     Help,
@@ -53,7 +54,8 @@ Exercise list (in the ascending order):
     - beacon-exclusion-zone,
     - proboscidea-volcanium,
     - pyroclastic-flow,
-    - boiling-boulders.
+    - boiling-boulders,
+    - not-enough-minerals.
 
 Part:
     - part_1,
@@ -121,6 +123,7 @@ pub enum Exercise {
     ProboscideaVolcanium(Part, bool),
     PyroclasticFlow(Part, bool),
     BoilingBoulders(Part, bool),
+    NotEnoughMinerals(Part, bool)
 }
 
 pub enum Part {
@@ -177,6 +180,7 @@ impl TryFrom<&Vec<String>> for Exercise {
             "proboscidea-volcanium" => Ok(Exercise::ProboscideaVolcanium(part, use_example)),
             "pyroclastic-flow" => Ok(Exercise::PyroclasticFlow(part, use_example)),
             "boiling-boulders" => Ok(Exercise::BoilingBoulders(part, use_example)),
+            "not-enough-minerals" => Ok(Exercise::NotEnoughMinerals(part, use_example)),
             other => {
                 return Err(format!(
                     "Unknown exercise chosen, please choose one of the available exercise, got {}",
@@ -440,6 +444,18 @@ impl Exercise {
                 let result = match part {
                     Part::Part1 => boiling_boulders::derive_surface_area(filename, false)?,
                     Part::Part2 => boiling_boulders::derive_surface_area(filename, true)?,
+                };
+                println!("Got {}", result)
+            }
+            Exercise::NotEnoughMinerals(part, use_example) => {
+                let filename = if *use_example {
+                    "inputs/input-19-example.txt"
+                } else {
+                    "inputs/input-19.txt"
+                };
+                let result = match part {
+                    Part::Part1 => not_enough_minerals::stuff(filename)?,
+                    Part::Part2 => not_enough_minerals::stuff(filename)?,
                 };
                 println!("Got {}", result)
             }
